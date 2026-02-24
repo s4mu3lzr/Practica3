@@ -1,0 +1,7 @@
+/* Reseteo básico para que ocupe toda la pantalla */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family, sans-serif);
+  background-color: var(--surface-ground, #f8f9fa);
+}
