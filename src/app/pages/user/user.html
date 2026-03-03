@@ -1,0 +1,80 @@
+<div class="page-header">
+    <h1 style="color: var(--text-color); margin-top: 0;">Perfil de Usuario</h1>
+    <p style="color: var(--text-color-secondary);">Consulta y gestiona tu información personal</p>
+</div>
+
+<div class="profile-container">
+    <!-- Tarjeta Principal de Perfil -->
+    <p-card styleClass="profile-card">
+        <div class="profile-header">
+            <p-avatar icon="pi pi-user" size="xlarge" shape="circle"
+                [style]="{'background-color': 'var(--primary-color)', 'color': '#ffffff', 'width': '80px', 'height': '80px', 'font-size': '2.5rem'}">
+            </p-avatar>
+            <div class="profile-title">
+                <h2 style="margin: 0; color: var(--text-color);">{{ userProfile.fullName }}</h2>
+                <span style="color: var(--text-color-secondary); font-size: 1.1rem;">@{{ userProfile.username }} | {{
+                    userProfile.role }}</span>
+                <div style="margin-top: 5px;">
+                    <p-tag [value]="userProfile.status" severity="success"></p-tag>
+                </div>
+            </div>
+            <p-button icon="pi pi-pencil" label="Editar Perfil" styleClass="p-button-outlined"></p-button>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Datos de Perfil -->
+        <div class="profile-details-grid">
+            <div class="detail-item">
+                <i class="pi pi-envelope detail-icon"></i>
+                <div class="detail-content">
+                    <span class="detail-label">Correo Electrónico</span>
+                    <span class="detail-value">{{ userProfile.email }}</span>
+                </div>
+            </div>
+
+            <div class="detail-item">
+                <i class="pi pi-phone detail-icon"></i>
+                <div class="detail-content">
+                    <span class="detail-label">Teléfono</span>
+                    <span class="detail-value">{{ userProfile.phone }}</span>
+                </div>
+            </div>
+
+            <div class="detail-item">
+                <i class="pi pi-map-marker detail-icon"></i>
+                <div class="detail-content">
+                    <span class="detail-label">Dirección</span>
+                    <span class="detail-value">{{ userProfile.address }}</span>
+                </div>
+            </div>
+
+            <div class="detail-item">
+                <i class="pi pi-user detail-icon"></i>
+                <div class="detail-content">
+                    <span class="detail-label">Edad</span>
+                    <span class="detail-value">{{ userProfile.age }} años</span>
+                </div>
+            </div>
+
+            <div class="detail-item">
+                <i class="pi pi-lock detail-icon"></i>
+                <div class="detail-content">
+                    <span class="detail-label">Contraseña</span>
+                    <span class="detail-value">{{ userProfile.password }}</span>
+                </div>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Sección de Habilidades (Skills) -->
+        <div class="skills-section">
+            <h3 style="color: var(--text-color); margin-top: 0; margin-bottom: 1rem;">Habilidades y Competencias</h3>
+            <div class="skills-container">
+                <p-tag *ngFor="let skill of userProfile.skills" [value]="skill"
+                    styleClass="p-tag-secondary skill-tag"></p-tag>
+            </div>
+        </div>
+    </p-card>
+</div>

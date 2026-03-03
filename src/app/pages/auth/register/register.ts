@@ -22,16 +22,16 @@ export class RegisterComponent {
     this.registerForm = this.fb.group({
       fullName: ['', Validators.required],
       username: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
       address: ['', Validators.required],
       // Validación: Solo números y 10 dígitos (ajusta el 10 según tu país)
-      phone: ['', [Validators.required, Validators.pattern('^[0-9]*$'), Validators.minLength(10)]],
+      phone: ['', [Validators.required, Validators.pattern('^[0-9]*$'), Validators.maxLength(10), Validators.minLength(10)]],
       // Validación: Mayor de edad (>= 18)
       age: ['', [Validators.required, Validators.min(18)]],
       // Validación: Mínimo 10 caracteres y al menos un símbolo especial
       password: ['', [
-        Validators.required, 
-        Validators.minLength(10), 
+        Validators.required,
+        Validators.minLength(10),
         Validators.pattern(/^(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).*$/) // Regex símbolos
       ]],
       confirmPassword: ['', Validators.required]

@@ -1,0 +1,13 @@
+<div style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--surface-ground);">
+  <div style="background: var(--surface-card); padding: 3rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; max-width: 500px;">
+    
+    <i class="pi pi-check-circle" style="font-size: 4rem; color: var(--green-500); margin-bottom: 1rem;"></i>
+    
+    <h1 style="color: var(--text-color); margin-top: 0;">¡Bienvenido, {{ adminName }}!</h1>
+    <p style="color: var(--text-color-secondary); margin-bottom: 2rem;">
+      Has accedido correctamente al panel de administración de tu ERP.
+    </p>
+    
+    <p-button label="Cerrar Sesión" icon="pi pi-sign-out" severity="danger" (onClick)="onLogout()"></p-button>
+  </div>
+</div>

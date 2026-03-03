@@ -1,0 +1,36 @@
+<div class="page-header">
+    <h1 style="color: var(--text-color); margin-top: 0;">Gestión de Grupos</h1>
+    <p style="color: var(--text-color-secondary);">Administra los grupos y revisa sus avances</p>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Campo Numérico Nuevo -->
+    <div class="numeric-input-section" style="margin-top: 1rem;">
+        <p-card header="Configuración Numérica">
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="numeroGrupo" style="color: var(--text-color); font-weight: 500;">Ingresa un número para el
+                    grupo</label>
+                <p-inputNumber inputId="numeroGrupo" [(ngModel)]="inputNumero" placeholder="Ej. 10" [showButtons]="true"
+                    buttonLayout="horizontal" spinnerMode="horizontal" [step]="1" decrementButtonClass="p-button-danger"
+                    incrementButtonClass="p-button-success" incrementButtonIcon="pi pi-plus"
+                    decrementButtonIcon="pi pi-minus">
+                </p-inputNumber>
+                <small style="color: var(--text-color-secondary);" *ngIf="inputNumero !== null">Número ingresado: {{
+                    inputNumero }}</small>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Mensaje de Sin Avances -->
+    <div class="empty-state-section" style="margin-top: 1rem;">
+        <p-card>
+            <div style="text-align: center; padding: 2rem;">
+                <i class="pi pi-inbox"
+                    style="font-size: 3rem; color: var(--text-color-secondary); margin-bottom: 1rem;"></i>
+                <h3 style="margin: 0; color: var(--text-color);">Sin avances registrados</h3>
+                <p style="color: var(--text-color-secondary); margin-top: 0.5rem;">Actualmente no hay información de
+                    progreso disponible para los grupos.</p>
+            </div>
+        </p-card>
+    </div>
+</div>

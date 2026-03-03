@@ -1,0 +1,90 @@
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.summary-cards {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+::ng-deep .summary-card.p-card {
+    flex: 1;
+    min-width: 250px;
+}
+
+::ng-deep .summary-card .p-card-body {
+    padding: 1.5rem;
+}
+
+.summary-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.summary-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.summary-data {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.summary-label {
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.summary-value {
+    color: var(--text-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.advances-section {
+    width: 100%;
+}
+
+.advances-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-top: 1rem;
+}
+
+.avance-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.avance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.avance-name {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.avance-percentage {
+    font-weight: 600;
+    color: var(--text-color-secondary);
+}
