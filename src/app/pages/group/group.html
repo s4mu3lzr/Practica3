@@ -1,36 +1,111 @@
-<div class="page-header">
-    <h1 style="color: var(--text-color); margin-top: 0;">Gestión de Grupos</h1>
-    <p style="color: var(--text-color-secondary);">Administra los grupos y revisa sus avances</p>
-</div>
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
-<div class="dashboard-grid">
-    <!-- Campo Numérico Nuevo -->
-    <div class="numeric-input-section" style="margin-top: 1rem;">
-        <p-card header="Configuración Numérica">
-            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label for="numeroGrupo" style="color: var(--text-color); font-weight: 500;">Ingresa un número para el
-                    grupo</label>
-                <p-inputNumber inputId="numeroGrupo" [(ngModel)]="inputNumero" placeholder="Ej. 10" [showButtons]="true"
-                    buttonLayout="horizontal" spinnerMode="horizontal" [step]="1" decrementButtonClass="p-button-danger"
-                    incrementButtonClass="p-button-success" incrementButtonIcon="pi pi-plus"
-                    decrementButtonIcon="pi pi-minus">
-                </p-inputNumber>
-                <small style="color: var(--text-color-secondary);" *ngIf="inputNumero !== null">Número ingresado: {{
-                    inputNumero }}</small>
-            </div>
-        </p-card>
+<div class="page-container">
+    <div class="header-section">
+        <div>
+            <h1 class="page-title">Gestión de Grupos</h1>
+            <p class="page-subtitle">Administra los grupos de alumnos, niveles y tickets asociados.</p>
+        </div>
+        <p-button label="Nuevo Grupo" icon="pi pi-plus" (onClick)="openNew()" styleClass="p-button-primary"></p-button>
     </div>
 
-    <!-- Mensaje de Sin Avances -->
-    <div class="empty-state-section" style="margin-top: 1rem;">
-        <p-card>
-            <div style="text-align: center; padding: 2rem;">
-                <i class="pi pi-inbox"
-                    style="font-size: 3rem; color: var(--text-color-secondary); margin-bottom: 1rem;"></i>
-                <h3 style="margin: 0; color: var(--text-color);">Sin avances registrados</h3>
-                <p style="color: var(--text-color-secondary); margin-top: 0.5rem;">Actualmente no hay información de
-                    progreso disponible para los grupos.</p>
-            </div>
-        </p-card>
-    </div>
+    <p-card styleClass="saas-card-component">
+        <p-table #dt [value]="groups" [rows]="10" [paginator]="true" [globalFilterFields]="['nombre', 'autor', 'nivel']"
+            [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
+            currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} entradas"
+            [showCurrentPageReport]="true">
+            <ng-template pTemplate="caption">
+                <div class="table-header flex justify-content-between align-items-center">
+                    <h5 class="m-0 text-lg font-semibold text-gray-800">Listado de Grupos</h5>
+                    <span class="p-input-icon-left">
+                        <i class="pi pi-search"></i>
+                        <input pInputText type="text" #searchInput
+                            (input)="dt.filterGlobal(searchInput.value, 'contains')" placeholder="Buscar global..." />
+                    </span>
+                </div>
+            </ng-template>
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="name" style="min-width:15rem">Nombre <p-sortIcon field="name"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="description" style="min-width:20rem">Descripción <p-sortIcon
+                            field="description"></p-sortIcon></th>
+                    <th pSortableColumn="nivel">Nivel <p-sortIcon field="nivel"></p-sortIcon></th>
+                    <th pSortableColumn="autor">Autor <p-sortIcon field="autor"></p-sortIcon></th>
+                    <th pSortableColumn="membersCount">Integrantes <p-sortIcon field="membersCount"></p-sortIcon></th>
+                    <th>Acciones</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-group>
+                <tr>
+                    <td><span class="font-medium text-gray-800">{{ group.name }}</span></td>
+                    <td>{{ group.description }}</td>
+                    <td><p-tag [value]="group.nivel" severity="info"></p-tag></td>
+                    <td>{{ group.autor }}</td>
+                    <td>
+                        <p-tag [value]="group.membersCount.toString()" severity="secondary"></p-tag>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <!-- Link a gestión interna -->
+                            <p-button icon="pi pi-cog" [rounded]="true" [text]="true" severity="secondary"
+                                pTooltip="Gestionar" [routerLink]="['/group/manage', group.id]"></p-button>
+                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                pTooltip="Editar" (onClick)="editGroup(group)"></p-button>
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                pTooltip="Eliminar" (onClick)="deleteGroup(group)"></p-button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="4" class="text-center p-5">
+                        <i class="pi pi-folder-open text-gray-400 mb-3" style="font-size: 3rem"></i>
+                        <h4 class="text-gray-600 m-0">No hay datos disponibles</h4>
+                        <p class="text-gray-500 text-sm mt-1">Aún no hay registros para mostrar en esta sección.</p>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-card>
 </div>
+
+<p-dialog [(visible)]="groupDialog" [style]="{ width: '500px' }" header="Detalles del Grupo" [modal]="true"
+    class="p-fluid">
+    <ng-template pTemplate="content">
+        <form [formGroup]="groupForm" class="flex flex-col gap-4 mt-3">
+
+            <div class="field">
+                <label for="name" class="font-medium text-gray-700">Nombre del Grupo</label>
+                <input type="text" pInputText id="name" formControlName="name" placeholder="Ej. IT Support" />
+                <small class="p-error block mt-1"
+                    *ngIf="groupForm.get('name')?.invalid && groupForm.get('name')?.touched">El nombre es
+                    requerido.</small>
+            </div>
+
+            <div class="field">
+                <label for="nivel" class="font-medium text-gray-700">Nivel</label>
+                <p-select [options]="nivelOptions" formControlName="nivel" appendTo="body"
+                    styleClass="w-full"></p-select>
+            </div>
+
+            <div class="field mb-0">
+                <label for="description" class="font-medium text-gray-700">Descripción</label>
+                <textarea pTextarea id="description" formControlName="description" rows="3" class="w-full"
+                    placeholder="Detalles del grupo..."></textarea>
+                <small class="p-error block mt-1"
+                    *ngIf="groupForm.get('description')?.invalid && groupForm.get('description')?.touched">La
+                    descripción es requerida.</small>
+            </div>
+
+        </form>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancelar" icon="pi pi-times" [text]="true" severity="secondary"
+            (onClick)="hideDialog()"></p-button>
+        <p-button label="Guardar" icon="pi pi-check" (onClick)="saveGroup()"></p-button>
+    </ng-template>
+</p-dialog>

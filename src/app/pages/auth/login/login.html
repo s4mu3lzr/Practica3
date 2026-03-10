@@ -1,43 +1,33 @@
-<div
-  style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--surface-ground);">
-
+<div style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: var(--surface-ground);">
+  
   <p-toast></p-toast>
 
-  <div
-    style="background: var(--surface-card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px;">
-
+  <div style="background: var(--surface-card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px;">
+    
     <div style="text-align: center; margin-bottom: 2rem;">
       <i class="pi pi-box" style="font-size: 2.5rem; color: var(--primary-color);"></i>
       <h2 style="margin: 10px 0 0 0; color: var(--text-color);">Iniciar Sesión</h2>
-
+     
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onLogin()" style="display: flex; flex-direction: column; gap: 1.5rem;">
-
+      
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
         <label for="email" style="color: var(--text-color); font-weight: 500;">Correo Electrónico</label>
-        <input pInputText id="email" type="email" formControlName="email" placeholder="usuario@dominio.com"
-          style="width: 100%;"
-          [ngClass]="{'ng-invalid ng-dirty': loginForm.get('email')?.invalid && loginForm.get('email')?.touched}" />
-        <small class="p-error" *ngIf="loginForm.get('email')?.hasError('pattern') && loginForm.get('email')?.touched">
-          Ingresa un correo con dominio válido (ej. .com)
-        </small>
+        <input pInputText id="email" type="email" formControlName="email" placeholder="admin@erp.com" style="width: 100%;" />
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
         <label for="password" style="color: var(--text-color); font-weight: 500;">Contraseña</label>
-        <input pInputText id="password" type="password" formControlName="password" placeholder="********"
-          style="width: 100%;" />
+        <input pInputText id="password" type="password" formControlName="password" placeholder="********" style="width: 100%;" />
       </div>
 
-      <p-button label="Ingresar" icon="pi pi-sign-in" type="submit" [style]="{'width': '100%'}"
-        [disabled]="loginForm.invalid"></p-button>
+      <p-button label="Ingresar" icon="pi pi-sign-in" type="submit" [style]="{'width': '100%'}"></p-button>
     </form>
 
     <div style="margin-top: 2rem; text-align: center; font-size: 0.9rem;">
       <span style="color: var(--text-color-secondary);">¿No tienes cuenta? </span>
-      <a routerLink="/auth/register"
-        style="color: var(--primary-color); font-weight: 600; text-decoration: none;">Regístrate aquí</a>
+      <a routerLink="/auth/register" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">Regístrate aquí</a>
     </div>
 
   </div>

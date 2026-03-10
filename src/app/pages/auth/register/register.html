@@ -1,76 +1,108 @@
-<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: var(--surface-ground); padding: 20px;">
-  
+<div class="auth-container">
+
   <p-toast></p-toast>
 
-  <div style="background: var(--surface-card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 500px;">
-    
-    <div style="text-align: center; margin-bottom: 2rem;">
-      <h2 style="margin: 0; color: var(--text-color);">Crear Cuenta</h2>
-      <p style="color: var(--text-color-secondary); margin-top: 5px;">Completa el formulario</p>
+  <div class="auth-card max-w-lg" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+
+    <div class="auth-header">
+      <div class="logo-circle">
+        <i class="pi pi-user-plus logo-icon"></i>
+      </div>
+      <h2 class="auth-title">Crear Cuenta</h2>
+      <p class="auth-subtitle">Ingresa tus datos para unirte al ERP corporativo</p>
     </div>
 
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" style="display: flex; flex-direction: column; gap: 1.2rem;">
-      
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="p-fluid">
+
       <div class="field">
-        <label class="block mb-2">Nombre Completo</label>
-        <input pInputText formControlName="fullName" placeholder="Juan Pérez" class="w-full" style="width: 100%;" />
+        <label class="block mb-2 font-medium">Nombre Completo</label>
+        <div class="p-input-icon-left w-full input-container">
+          <i class="pi pi-user" style="color: var(--primary-color)"></i>
+          <input pInputText formControlName="fullName" placeholder="ej. Alce Ruiz" class="w-full custom-pl" />
+        </div>
       </div>
 
-      <div style="display: flex; gap: 10px;">
-        <div style="flex: 2;">
-          <label class="block mb-2">Usuario</label>
-          <input pInputText formControlName="username" placeholder="juanp" style="width: 100%;" />
+      <div class="responsive-row">
+        <div class="field responsive-col flex-grow-7">
+          <label class="block mb-2 font-medium">Nombre de Usuario</label>
+          <div class="p-input-icon-left w-full input-container">
+            <i class="pi pi-id-card" style="color: var(--primary-color)"></i>
+            <input pInputText formControlName="username" placeholder="alce_99" class="w-full custom-pl" />
+          </div>
         </div>
-        <div style="flex: 1;">
-          <label class="block mb-2">Edad</label>
-          <input pInputText type="number" formControlName="age" placeholder="18+" style="width: 100%;" />
-          <small *ngIf="registerForm.get('age')?.invalid && registerForm.get('age')?.touched" style="color: red; display: block;">
-            Solo +18
+        <div class="field responsive-col flex-grow-5">
+          <label class="block mb-2 font-medium" style="white-space: nowrap;">Fecha Nac.</label>
+          <div class="p-input-icon-left w-full input-container">
+            <p-datepicker formControlName="dob" [showIcon]="true" dateFormat="dd/mm/yy" appendTo="body"
+              styleClass="w-full"></p-datepicker>
+          </div>
+          <small *ngIf="registerForm.get('dob')?.hasError('required') && registerForm.get('dob')?.touched"
+            class="p-error block mt-1">Requerido.</small>
+          <small *ngIf="registerForm.get('dob')?.hasError('underaged') && registerForm.get('dob')?.touched"
+            class="p-error block mt-1">Debes tener +18 años.</small>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="block mb-2 font-medium">Dirección</label>
+        <div class="p-input-icon-left w-full input-container">
+          <i class="pi pi-map-marker" style="color: var(--primary-color)"></i>
+          <input pInputText formControlName="address" placeholder="Av. Universidad 123" class="w-full custom-pl" />
+        </div>
+      </div>
+
+      <div class="responsive-row">
+        <div class="field responsive-col flex-grow-5">
+          <label class="block mb-2 font-medium">Teléfono</label>
+          <div class="p-input-icon-left w-full input-container">
+            <i class="pi pi-phone" style="color: var(--primary-color)"></i>
+            <input pInputText formControlName="phone" placeholder="5512345678" class="w-full custom-pl" />
+          </div>
+          <small *ngIf="registerForm.get('phone')?.errors?.['pattern']" class="p-error block mt-1">Solo admiten 10
+            dígitos.</small>
+        </div>
+        <div class="field responsive-col flex-grow-7">
+          <label class="block mb-2 font-medium">Correo Electrónico</label>
+          <div class="p-input-icon-left w-full input-container">
+            <i class="pi pi-envelope" style="color: var(--primary-color)"></i>
+            <input pInputText type="email" formControlName="email" placeholder="alce@demo.com"
+              class="w-full custom-pl" />
+          </div>
+        </div>
+      </div>
+
+      <div class="responsive-row">
+        <div class="field responsive-col flex-grow-5">
+          <label class="block mb-2 font-medium">Contraseña</label>
+          <p-password formControlName="password" [toggleMask]="true" [feedback]="true"
+            placeholder="Mín 10 chars, 1 símbolo..." styleClass="w-full input-container z-10"></p-password>
+          <small *ngIf="registerForm.get('password')?.errors?.['minlength']" class="p-error block mt-1">Mínimo 10
+            caracteres.</small>
+          <small *ngIf="registerForm.get('password')?.errors?.['pattern']" class="p-error block mt-1">Falta símbolo ($,
+            %, &).</small>
+        </div>
+        <div class="field responsive-col flex-grow-5">
+          <label class="block mb-2 font-medium">Confirmar</label>
+          <p-password [feedback]="false" [toggleMask]="true" formControlName="confirmPassword"
+            placeholder="Confirma contraseña" styleClass="w-full input-container z-10"></p-password>
+          <small *ngIf="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched"
+            class="p-error block mt-1">
+            No coinciden.
           </small>
         </div>
       </div>
 
-      <div class="field">
-        <label class="block mb-2">Dirección</label>
-        <input pInputText formControlName="address" placeholder="Av. Siempre Viva 123" style="width: 100%;" />
-      </div>
-
-      <div class="field">
-        <label class="block mb-2">Teléfono (Solo números)</label>
-        <input pInputText formControlName="phone" placeholder="5512345678" style="width: 100%;" />
-        <small *ngIf="registerForm.get('phone')?.errors?.['pattern']" style="color: red;">Solo se permiten números</small>
-      </div>
-
-      <div class="field">
-        <label class="block mb-2">Correo Electrónico</label>
-        <input pInputText type="email" formControlName="email" placeholder="ejemplo@correo.com" style="width: 100%;" />
-      </div>
-
-      <div class="field">
-        <label class="block mb-2">Contraseña (Mín 10 chars + símbolo)</label>
-        <p-password formControlName="password" [toggleMask]="true" [feedback]="true" placeholder="********" styleClass="w-full" [style]="{'width':'100%'}"></p-password>
-        <small *ngIf="registerForm.get('password')?.errors?.['minlength']" style="color: red; display: block;">Mínimo 10 caracteres.</small>
-        <small *ngIf="registerForm.get('password')?.errors?.['pattern']" style="color: red; display: block;">Falta un símbolo especial ($, %, &, etc).</small>
-      </div>
-
-      <div class="field">
-        <label class="block mb-2">Confirmar Contraseña</label>
-        <input pInputText type="password" formControlName="confirmPassword" placeholder="********" style="width: 100%;" />
-        <small *ngIf="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched" style="color: red;">
-          Las contraseñas no coinciden.
-        </small>
-      </div>
-
-      <p-button label="Registrarme" icon="pi pi-check" type="submit" 
-                [disabled]="registerForm.invalid" 
-                [style]="{'width': '100%', 'margin-top': '10px'}">
+      <p-button label="Unirme Ahora" icon="pi pi-check" type="submit" [disabled]="registerForm.invalid"
+        styleClass="p-button-primary mt-3 w-full py-3 text-lg shadow-2">
       </p-button>
 
     </form>
 
-    <div style="margin-top: 2rem; text-align: center; font-size: 0.9rem;">
-      <span style="color: var(--text-color-secondary);">¿Ya tienes una cuenta? </span>
-      <a routerLink="/auth/login" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">Inicia sesión</a>
+    <div style="margin-top: 2.5rem; text-align: center; font-size: 0.95rem;">
+      <span style="color: var(--text-color-secondary);">¿Ya eres parte del equipo? </span>
+      <a routerLink="/auth/login"
+        style="color: var(--primary-color); font-weight: 600; text-decoration: none; transition: color 0.2s;">Inicia
+        sesión aquí</a>
     </div>
 
   </div>

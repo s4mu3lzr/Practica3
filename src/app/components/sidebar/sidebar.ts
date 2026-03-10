@@ -12,7 +12,7 @@ import { SecurityService } from '../../security/security'; // <-- Para poder cer
   styleUrl: './sidebar.css'
 })
 export class SidebarComponent {
-  constructor(private securityService: SecurityService, private router: Router) { }
+  constructor(public securityService: SecurityService, private router: Router) { }
 
   logout() {
     this.securityService.logout();

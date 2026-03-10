@@ -12,6 +12,10 @@
     <p-button label="Usuario" icon="pi pi-user" routerLink="/user" styleClass="p-button-text"
       [style]="{'width': '100%', 'text-align': 'left'}"></p-button>
 
+    <p-button *ngIf="securityService.hasPermission('user:crud')" label="Admin Usuarios" icon="pi pi-shield"
+      routerLink="/admin/users" styleClass="p-button-text"
+      [style]="{'width': '100%', 'text-align': 'left', 'color': 'var(--primary-color)'}"></p-button>
+
     <div style="flex-grow: 1;"></div>
 
     <div style="text-align: center; margin-bottom: 10px;">

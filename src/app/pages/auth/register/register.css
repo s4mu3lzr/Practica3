@@ -1,0 +1,173 @@
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 50%, #d8b4fe 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-container::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(168, 85, 247, 0) 70%);
+    border-radius: 50%;
+    z-index: 0;
+}
+
+.auth-container::after {
+    content: '';
+    position: absolute;
+    bottom: -10%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.3) 0%, rgba(147, 51, 234, 0) 70%);
+    border-radius: 50%;
+    z-index: 0;
+}
+
+.auth-card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 2.5rem 2rem;
+}
+
+.max-w-lg {
+    max-width: 550px !important;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logo-circle {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.25rem auto;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-color-focus));
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 16px -4px rgba(126, 34, 206, 0.4);
+    transform: rotate(-10deg);
+    transition: transform 0.3s ease;
+}
+
+.auth-card:hover .logo-circle {
+    transform: rotate(0deg) scale(1.05);
+}
+
+.logo-icon {
+    font-size: 1.8rem !important;
+    color: white !important;
+}
+
+.auth-title {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-color);
+    letter-spacing: -0.025em;
+}
+
+.auth-subtitle {
+    margin: 0;
+    color: var(--text-color-secondary);
+    font-size: 0.95rem;
+}
+
+.field {
+    margin-bottom: 1.25rem;
+}
+
+.field label {
+    font-size: 0.95rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.input-container {
+    width: 100%;
+}
+
+.custom-pl {
+    padding-left: 2.5rem !important;
+}
+
+.z-10 {
+    z-index: 10 !important;
+}
+
+/* Custom prime icon alignments in input */
+::ng-deep .p-input-icon-left>i,
+::ng-deep .p-input-icon-right>i {
+    z-index: 10;
+}
+
+/* Pure CSS Responsive Row */
+.responsive-row {
+    display: flex;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.responsive-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-grow-7 {
+    flex: 1.4;
+}
+
+.flex-grow-5 {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .logo-circle {
+        width: 56px;
+        height: 56px;
+        margin-bottom: 1rem;
+    }
+
+    .auth-title {
+        font-size: 1.5rem;
+    }
+
+    .responsive-row {
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 0;
+    }
+
+    .responsive-col {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    /* Ocultar halos en mobile para rendimiento */
+    .auth-container::before,
+    .auth-container::after {
+        display: none;
+    }
+}

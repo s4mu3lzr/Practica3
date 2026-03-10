@@ -1,80 +1,221 @@
-<div class="page-header">
-    <h1 style="color: var(--text-color); margin-top: 0;">Perfil de Usuario</h1>
-    <p style="color: var(--text-color-secondary);">Consulta y gestiona tu información personal</p>
-</div>
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
-<div class="profile-container">
-    <!-- Tarjeta Principal de Perfil -->
-    <p-card styleClass="profile-card">
-        <div class="profile-header">
-            <p-avatar icon="pi pi-user" size="xlarge" shape="circle"
-                [style]="{'background-color': 'var(--primary-color)', 'color': '#ffffff', 'width': '80px', 'height': '80px', 'font-size': '2.5rem'}">
-            </p-avatar>
-            <div class="profile-title">
-                <h2 style="margin: 0; color: var(--text-color);">{{ userProfile.fullName }}</h2>
-                <span style="color: var(--text-color-secondary); font-size: 1.1rem;">@{{ userProfile.username }} | {{
-                    userProfile.role }}</span>
-                <div style="margin-top: 5px;">
-                    <p-tag [value]="userProfile.status" severity="success"></p-tag>
+<div class="page-container">
+    <div class="header-section">
+        <div>
+            <h1 class="page-title">Perfil de Usuario</h1>
+            <p class="page-subtitle">Gestiona tu información personal y la configuración de tu cuenta.</p>
+        </div>
+    </div>
+
+    <div class="profile-layout grid">
+        <!-- Sidebar Perfil -->
+        <div class="col-12 md-col-4">
+            <p-card styleClass="saas-card-component text-center h-full">
+                <div class="flex flex-col items-center p-4">
+                    <p-avatar image="https://ui-avatars.com/api/?name=Samuel+de+Santiago&background=random"
+                        size="xlarge" shape="circle" styleClass="mb-3 custom-avatar-size"></p-avatar>
+
+                    <h2 class="user-fullname">{{ userProfile.fullName }}</h2>
+                    <p class="user-handle">@{{ userProfile.username }}</p>
+
+                    <div class="flex gap-2 justify-center mb-4 mt-2">
+                        <p-tag [value]="userProfile.permissions.length + ' Permisos'" severity="info"></p-tag>
+                        <p-tag [value]="userProfile.status" severity="success"></p-tag>
+                    </div>
+
+                    <p-divider styleClass="w-full my-3"></p-divider>
+
+                    <div class="text-left w-full px-3 mb-4">
+                        <p class="text-sm mb-2"><i class="pi pi-envelope mr-2 text-primary"></i> {{ userProfile.email }}
+                        </p>
+                        <p class="text-sm mb-2"><i class="pi pi-phone mr-2 text-primary"></i> {{ userProfile.phone }}
+                        </p>
+                        <p class="text-sm mb-2"><i class="pi pi-map-marker mr-2 text-primary"></i> {{
+                            userProfile.address }}</p>
+                        <p class="text-sm mb-0"><i class="pi pi-calendar mr-2 text-primary"></i> {{ userProfile.dob |
+                            date:'longDate' }}</p>
+                    </div>
+
+                    <p-divider styleClass="w-full my-3"></p-divider>
+
+                    <div class="text-left w-full">
+                        <h4 class="skills-title">Habilidades Destacadas:</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <p-tag *ngFor="let skill of userProfile.skills" [value]="skill" severity="secondary"
+                                [rounded]="true"></p-tag>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <p-button icon="pi pi-pencil" label="Editar Perfil" styleClass="p-button-outlined"></p-button>
+            </p-card>
         </div>
 
-        <p-divider></p-divider>
-
-        <!-- Datos de Perfil -->
-        <div class="profile-details-grid">
-            <div class="detail-item">
-                <i class="pi pi-envelope detail-icon"></i>
-                <div class="detail-content">
-                    <span class="detail-label">Correo Electrónico</span>
-                    <span class="detail-value">{{ userProfile.email }}</span>
+        <!-- Formulario Perfil -->
+        <div class="col-12 md-col-8">
+            <p-card styleClass="saas-card-component h-full">
+                <div class="form-header">
+                    <h3 class="form-title">Información Personal</h3>
+                    <p class="form-subtitle">Los cambios se aplicarán a todas las aplicaciones integradas.</p>
                 </div>
-            </div>
 
-            <div class="detail-item">
-                <i class="pi pi-phone detail-icon"></i>
-                <div class="detail-content">
-                    <span class="detail-label">Teléfono</span>
-                    <span class="detail-value">{{ userProfile.phone }}</span>
-                </div>
-            </div>
+                <form [formGroup]="profileForm" (ngSubmit)="saveChanges()" class="p-fluid">
+                    <div class="formgrid grid gap-4 grid-cols-1 md-grid-cols-2 mb-4">
+                        <div class="field">
+                            <label for="fullName">Nombre Completo</label>
+                            <input type="text" pInputText id="fullName" formControlName="fullName" />
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('fullName')?.hasError('required') && profileForm.get('fullName')?.touched">El
+                                nombre es requerido.</small>
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('fullName')?.hasError('minlength') && profileForm.get('fullName')?.touched">El
+                                nombre debe tener al menos 3 caracteres.</small>
+                        </div>
+                        <div class="field">
+                            <label for="username">Nombre de Usuario</label>
+                            <input type="text" pInputText id="username" formControlName="username" />
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('username')?.hasError('required') && profileForm.get('username')?.touched">El
+                                usuario es requerido.</small>
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('username')?.hasError('minlength') && profileForm.get('username')?.touched">El
+                                usuario debe tener al menos 4 caracteres.</small>
+                        </div>
+                    </div>
 
-            <div class="detail-item">
-                <i class="pi pi-map-marker detail-icon"></i>
-                <div class="detail-content">
-                    <span class="detail-label">Dirección</span>
-                    <span class="detail-value">{{ userProfile.address }}</span>
-                </div>
-            </div>
+                    <div class="formgrid grid gap-4 grid-cols-1 md-grid-cols-2 mb-4">
+                        <div class="field">
+                            <label for="email">Correo Electrónico</label>
+                            <input type="email" pInputText id="email" formControlName="email" />
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('email')?.hasError('required') && profileForm.get('email')?.touched">El
+                                correo es requerido.</small>
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('email')?.hasError('email') && profileForm.get('email')?.touched">Debe
+                                ser un correo válido.</small>
+                        </div>
+                        <div class="field">
+                            <label for="phone">Teléfono</label>
+                            <input type="text" pInputText id="phone" formControlName="phone" />
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('phone')?.hasError('required') && profileForm.get('phone')?.touched">El
+                                teléfono es requerido.</small>
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('phone')?.hasError('pattern') && profileForm.get('phone')?.touched">Debe
+                                contener 10 dígitos.</small>
+                        </div>
+                    </div>
 
-            <div class="detail-item">
-                <i class="pi pi-user detail-icon"></i>
-                <div class="detail-content">
-                    <span class="detail-label">Edad</span>
-                    <span class="detail-value">{{ userProfile.age }} años</span>
-                </div>
-            </div>
+                    <div class="formgrid grid gap-4 grid-cols-1 md-grid-cols-2 mb-4">
+                        <div class="field">
+                            <label for="address">Dirección de Residencia</label>
+                            <input type="text" pInputText id="address" formControlName="address" />
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('address')?.hasError('required') && profileForm.get('address')?.touched">La
+                                dirección es requerida.</small>
+                        </div>
+                        <div class="field flex flex-col">
+                            <label for="dob">Fecha de Nacimiento</label>
+                            <p-datepicker id="dob" formControlName="dob" ngSkipHydration [showIcon]="true"
+                                dateFormat="dd/mm/yy" appendTo="body" styleClass="w-full"></p-datepicker>
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('dob')?.hasError('required') && profileForm.get('dob')?.touched">La
+                                fecha de nacimiento es requerida.</small>
+                            <small class="p-error block mt-1"
+                                *ngIf="profileForm.get('dob')?.hasError('underaged') && profileForm.get('dob')?.touched">Debes
+                                ser mayor de 18 años.</small>
+                        </div>
+                    </div>
 
-            <div class="detail-item">
-                <i class="pi pi-lock detail-icon"></i>
-                <div class="detail-content">
-                    <span class="detail-label">Contraseña</span>
-                    <span class="detail-value">{{ userProfile.password }}</span>
+                    <div class="flex justify-content-end mt-4 pt-4 border-t border-gray-100">
+                        <p-button label="Guardar Cambios" icon="pi pi-save" type="submit"
+                            [disabled]="profileForm.invalid" styleClass="p-button-primary"></p-button>
+                    </div>
+                </form>
+
+                <p-divider styleClass="my-5"></p-divider>
+
+                <!-- FASE 4: Resumen de Carga de Trabajo y Tickets -->
+                <div class="workload-section">
+                    <h3 class="form-title mb-4"><i class="pi pi-briefcase mr-2"></i> Mi Carga de Trabajo</h3>
+
+                    <div class="grid gap-3 mb-4">
+                        <div class="col">
+                            <p-card styleClass="text-center bg-red-50 border-round-xl border-none shadow-1">
+                                <h2 class="text-red-500 m-0 text-3xl font-bold">{{ ticketsOpen }}</h2>
+                                <span class="text-red-700 font-medium">Abiertos</span>
+                            </p-card>
+                        </div>
+                        <div class="col">
+                            <p-card styleClass="text-center bg-orange-50 border-round-xl border-none shadow-1">
+                                <h2 class="text-orange-500 m-0 text-3xl font-bold">{{ ticketsInProgress }}</h2>
+                                <span class="text-orange-700 font-medium">En Progreso</span>
+                            </p-card>
+                        </div>
+                        <div class="col">
+                            <p-card styleClass="text-center bg-green-50 border-round-xl border-none shadow-1">
+                                <h2 class="text-green-500 m-0 text-3xl font-bold">{{ ticketsDone }}</h2>
+                                <span class="text-green-700 font-medium">Hechos</span>
+                            </p-card>
+                        </div>
+                    </div>
+
+                    <p-table [value]="assignedTickets" [paginator]="true" [rows]="5" responsiveLayout="scroll">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Vencimiento</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-ticket>
+                            <tr>
+                                <td>
+                                    <span class="font-medium text-gray-800">{{ ticket.title }}</span>
+                                    <div class="text-xs text-gray-500">ID: #{{ ticket.id }} • Grupo: {{ ticket.groupId
+                                        }}</div>
+                                </td>
+                                <td>
+                                    <p-tag [value]="ticket.priority"
+                                        [severity]="ticket.priority === 'Alta' ? 'danger' : ticket.priority === 'Media' ? 'warn' : 'info'"></p-tag>
+                                </td>
+                                <td>
+                                    <p-tag [value]="ticket.status"
+                                        [severity]="ticket.status === 'Pendiente' ? 'danger' : ticket.status === 'En Progreso' ? 'warn' : ticket.status === 'Revisión' ? 'info' : 'success'"></p-tag>
+                                </td>
+                                <td class="text-gray-600">{{ ticket.dueDate | date:'dd/MM/yyyy' }}</td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="4" class="text-center p-5">
+                                    <i class="pi pi-folder-open text-gray-400 mb-3" style="font-size: 3rem"></i>
+                                    <h4 class="text-gray-600 m-0">No hay datos disponibles</h4>
+                                    <p class="text-gray-500 text-sm mt-1">Aún no hay registros para mostrar en esta
+                                        sección.</p>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
                 </div>
-            </div>
+
+                <p-divider styleClass="my-5"></p-divider>
+
+                <!-- Danger Zone -->
+                <div class="danger-zone p-5">
+                    <div class="danger-content">
+                        <div>
+                            <h3 class="danger-title"><i class="pi pi-exclamation-triangle mr-2"></i> Zona de Peligro
+                            </h3>
+                            <p class="danger-description">Una vez que elimines tu cuenta, no hay vuelta atrás. Perderás
+                                acceso y se eliminarán tus datos.</p>
+                        </div>
+                        <p-button label="Dar de baja la cuenta" severity="danger"
+                            (onClick)="deleteAccount()"></p-button>
+                    </div>
+                </div>
+            </p-card>
         </div>
-
-        <p-divider></p-divider>
-
-        <!-- Sección de Habilidades (Skills) -->
-        <div class="skills-section">
-            <h3 style="color: var(--text-color); margin-top: 0; margin-bottom: 1rem;">Habilidades y Competencias</h3>
-            <div class="skills-container">
-                <p-tag *ngFor="let skill of userProfile.skills" [value]="skill"
-                    styleClass="p-tag-secondary skill-tag"></p-tag>
-            </div>
-        </div>
-    </p-card>
+    </div>
 </div>

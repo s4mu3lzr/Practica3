@@ -6,3 +6,39 @@
         el menú lateral para navegar.
     </p>
 </p-card>
+
+<div style="margin-top: 2rem;"></div>
+
+<!-- Top KPIs panel using Flexbox / Grid -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <p-card header="Total de Tickets" styleClass="p-card-shadow">
+        <h2 style="margin: 0; color: var(--primary-color);">{{ kpis.total }}</h2>
+    </p-card>
+    <p-card header="Pendientes" styleClass="p-card-shadow">
+        <h2 style="margin: 0; color: #f59e0b;">{{ kpis.pendiente }}</h2>
+    </p-card>
+    <p-card header="En Progreso" styleClass="p-card-shadow">
+        <h2 style="margin: 0; color: #3b82f6;">{{ kpis.enProgreso }}</h2>
+    </p-card>
+    <p-card header="En Revisión" styleClass="p-card-shadow">
+        <h2 style="margin: 0; color: #8b5cf6;">{{ kpis.revision }}</h2>
+    </p-card>
+</div>
+
+<!-- Bottom Section: Accesos Rápidos a Grupos -->
+<h3 style="color: var(--text-color);">Accesos Rápidos a Grupos</h3>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+    <div *ngFor="let group of groups">
+        <p-card [header]="group.name" [subheader]="group.membersCount + ' integrant(es)'" styleClass="p-card-shadow">
+            <p class="m-0" style="color: var(--text-color-secondary); margin-bottom: 1rem !important;">
+                {{ group.description }}
+            </p>
+            <ng-template pTemplate="footer">
+                <p-button label="Gestionar Grupo" icon="pi pi-cog"
+                    [routerLink]="['/group/manage', group.id]"></p-button>
+            </ng-template>
+        </p-card>
+    </div>
+</div>

@@ -1,0 +1,351 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="m-3 p-4 saas-card-component" style="background-color: var(--surface-card);">
+    <!-- HEADER -->
+    <div class="flex justify-content-between align-items-start mb-4">
+        <div>
+            <div class="flex align-items-center gap-2 mb-2">
+                <a routerLink="/group" pButton icon="pi pi-arrow-left"
+                    class="p-button-rounded p-button-text p-button-secondary"></a>
+                <h1 class="text-3xl font-bold m-0 text-gray-800">{{ group?.name || 'Cargando...' }}</h1>
+            </div>
+            <p class="text-gray-500 m-0 ml-5">{{ group?.description }}</p>
+        </div>
+        <p-tag [value]="members.length + ' Integrantes'" severity="info"></p-tag>
+    </div>
+
+    <!-- TABS -->
+    <p-tabs value="0">
+        <p-tablist>
+            <p-tab value="0"><i class="pi pi-chart-bar mr-2"></i>Dashboard</p-tab>
+            <p-tab value="1"><i class="pi pi-users mr-2"></i>Integrantes</p-tab>
+            <p-tab value="2"><i class="pi pi-table mr-2"></i>Tickets</p-tab>
+        </p-tablist>
+
+        <p-tabpanels>
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+                 TAB 0: DASHBOARD GRUPO 
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <p-tabpanel value="0">
+                <div class="flex flex-column gap-4">
+                    <!-- KPIs Section -->
+                    <div class="grid gap-3">
+                        <div class="col">
+                            <p-card styleClass="p-card-shadow text-center">
+                                <h3 class="m-0 text-xl text-gray-800">Total</h3>
+                                <h2 class="m-0 text-3xl font-bold text-primary">{{ groupKpis.total }}</h2>
+                            </p-card>
+                        </div>
+                        <div class="col">
+                            <p-card styleClass="p-card-shadow text-center">
+                                <h3 class="m-0 text-xl text-gray-800">Pendientes</h3>
+                                <h2 class="m-0 text-3xl font-bold text-red-500">{{ groupKpis.pendiente }}</h2>
+                            </p-card>
+                        </div>
+                        <div class="col">
+                            <p-card styleClass="p-card-shadow text-center">
+                                <h3 class="m-0 text-xl text-gray-800">En Progreso</h3>
+                                <h2 class="m-0 text-3xl font-bold text-orange-500">{{ groupKpis.enProgreso }}</h2>
+                            </p-card>
+                        </div>
+                        <div class="col">
+                            <p-card styleClass="p-card-shadow text-center">
+                                <h3 class="m-0 text-xl text-gray-800">Hechos/Rev</h3>
+                                <h2 class="m-0 text-3xl font-bold text-green-500">{{ groupKpis.hechos }}</h2>
+                            </p-card>
+                        </div>
+                    </div>
+
+                    <!-- Fast Actions & Recents -->
+                    <div class="flex justify-content-between align-items-center mt-3">
+                        <h2 class="m-0 text-xl font-bold text-gray-800">Actividad Reciente</h2>
+                        <button pButton label="Crear Ticket" icon="pi pi-plus" class="p-button-primary"
+                            (click)="openNewTicketDialog()"></button>
+                    </div>
+
+                    <p-table [value]="recentTickets" styleClass="p-datatable-sm p-datatable-striped">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>Ticket</th>
+                                <th>Asignado A</th>
+                                <th>Estado</th>
+                                <th>Vencimiento</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-ticket>
+                            <tr>
+                                <td class="font-medium text-gray-800">{{ ticket.title }}</td>
+                                <td class="text-gray-600">{{ ticket.assignedTo }}</td>
+                                <td><p-tag [value]="ticket.status"
+                                        [severity]="getStatusSeverity(ticket.status)"></p-tag></td>
+                                <td>{{ ticket.dueDate | date:'dd/MM/yyyy' }}</td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="4" class="text-center p-5">
+                                    <i class="pi pi-folder-open text-gray-400 mb-3" style="font-size: 3rem"></i>
+                                    <h4 class="text-gray-600 m-0">No hay datos disponibles</h4>
+                                    <p class="text-gray-500 text-sm mt-1">Aún no hay registros para mostrar en esta
+                                        sección.</p>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </p-tabpanel>
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+                 TAB 1: INTEGRANTES 
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <p-tabpanel value="1">
+                <ng-container *ngIf="securityService.hasPermission('group:edit'); else noAccessGroup">
+                    <div class="mb-4 mt-2 max-w-30rem">
+                        <label class="block mb-2 font-medium">Invitar al grupo por correo electrónico</label>
+                        <div class="p-inputgroup">
+                            <input type="text" pInputText placeholder="ejemplo@demo.com" [(ngModel)]="newMemberEmail"
+                                (keyup.enter)="addMember()" />
+                            <button type="button" pButton icon="pi pi-user-plus" label="Añadir"
+                                (click)="addMember()"></button>
+                        </div>
+                    </div>
+
+                    <p-table [value]="members" [paginator]="true" [rows]="10"
+                        styleClass="p-datatable-sm p-datatable-striped" responsiveLayout="scroll">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width: 5%">Avatar</th>
+                                <th style="width: 30%">Nombre</th>
+                                <th style="width: 30%">Correo Electrónico</th>
+                                <th style="width: 25%">Permisos</th>
+                                <th style="width: 10%">Acciones</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-user>
+                            <tr>
+                                <td>
+                                    <div
+                                        class="w-2rem h-2rem bg-primary text-white flex border-circle align-items-center justify-content-center text-sm font-bold">
+                                        {{ user.name.charAt(0) }}
+                                    </div>
+                                </td>
+                                <td class="font-medium">{{ user.name }}</td>
+                                <td class="text-gray-500">{{ user.email }}</td>
+                                <td><p-tag [value]="user.permissions ? user.permissions.length + ' Asignados' : '0'"
+                                        [severity]="(user.permissions && user.permissions.includes('group:edit')) ? 'danger' : 'success'"></p-tag>
+                                </td>
+                                <td>
+                                    <button pButton pRipple icon="pi pi-user-minus"
+                                        class="p-button-rounded p-button-danger p-button-text"
+                                        (click)="confirmRemoveMember(user)" pTooltip="Remover del Grupo"></button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="5" class="text-center p-5">
+                                    <i class="pi pi-folder-open text-gray-400 mb-3" style="font-size: 3rem"></i>
+                                    <h4 class="text-gray-600 m-0">No hay datos disponibles</h4>
+                                    <p class="text-gray-500 text-sm mt-1">Aún no hay registros para mostrar en esta
+                                        sección.</p>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </ng-container>
+                <ng-template #noAccessGroup>
+                    <div class="text-center py-6">
+                        <i class="pi pi-lock text-6xl text-red-300 mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Acceso Restringido</h3>
+                        <p class="text-gray-500">No cuentas con los permisos necesarios (group:edit) para gestionar a
+                            los integrantes de este grupo.</p>
+                    </div>
+                </ng-template>
+            </p-tabpanel>
+
+            <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+                 TAB 2: TICKETS 
+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+            <p-tabpanel value="2">
+
+                <div
+                    class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 mt-2 gap-3">
+                    <div class="flex align-items-center gap-3">
+                        <button pButton label="Nuevo Ticket" icon="pi pi-plus" (click)="openNewTicketDialog()"></button>
+                        <p-selectButton [options]="quickFilterOptions" [(ngModel)]="activeFilter" optionLabel="label"
+                            optionValue="value"></p-selectButton>
+                    </div>
+
+                    <p-selectButton [options]="viewOptions" [(ngModel)]="viewMode" optionLabel="label"
+                        optionValue="value">
+                        <ng-template let-item pTemplate>
+                            <i [class]="item.icon"></i> <span class="ml-2 hidden sm:inline">{{ item.label }}</span>
+                        </ng-template>
+                    </p-selectButton>
+                </div>
+
+                <!-- VISTA: TABLA -->
+                <div *ngIf="viewMode === 'tabla'">
+                    <p-table [value]="filteredTickets" [paginator]="true" [rows]="10" responsiveLayout="scroll"
+                        [rowHover]="true" styleClass="p-datatable-sm p-datatable-striped">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>Título</th>
+                                <th>Asignado A</th>
+                                <th>Prioridad</th>
+                                <th>Estado</th>
+                                <th>Vencimiento</th>
+                                <th class="text-center">Vistazo</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-ticket>
+                            <tr>
+                                <td class="font-medium">{{ ticket.title }}</td>
+                                <td class="text-gray-600">{{ ticket.assignedTo }}</td>
+                                <td><p-tag [value]="ticket.priority"
+                                        [severity]="getPrioritySeverity(ticket.priority)"></p-tag></td>
+                                <td><p-tag [value]="ticket.status"
+                                        [severity]="getStatusSeverity(ticket.status)"></p-tag>
+                                </td>
+                                <td>{{ ticket.dueDate | date:'dd/MM/yyyy' }}</td>
+                                <td class="text-center">
+                                    <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text"
+                                        (click)="editTicket(ticket)"></button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="6" class="text-center p-5">
+                                    <i class="pi pi-folder-open text-gray-400 mb-3" style="font-size: 3rem"></i>
+                                    <h4 class="text-gray-600 m-0">No hay datos disponibles</h4>
+                                    <p class="text-gray-500 text-sm mt-1">Aún no hay registros para mostrar en esta
+                                        sección.</p>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+
+                <!-- VISTA: KANBAN -->
+                <div *ngIf="viewMode === 'kanban'" class="kanban-board" cdkDropListGroup>
+                    <div class="kanban-col" *ngFor="let colStatus of kanbanColumns">
+                        <div class="kanban-col-header">
+                            <span class="font-medium text-lg text-gray-800">{{ colStatus }}</span>
+                            <div class="kanban-badge">{{ getTicketsByStatus(colStatus).length }}</div>
+                        </div>
+
+                        <div class="kanban-col-body" cdkDropList [id]="colStatus"
+                            [cdkDropListData]="getTicketsByStatus(colStatus)" (cdkDropListDropped)="drop($event)">
+                            <p-card *ngFor="let ticket of getTicketsByStatus(colStatus)" cdkDrag
+                                class="kanban-card cursor-pointer" (click)="editTicket(ticket)">
+                                <div class="flex justify-content-between align-items-start mb-2">
+                                    <span class="text-xs font-semibold text-gray-400">#{{ ticket.id.toUpperCase()
+                                        }}</span>
+                                    <p-tag [value]="ticket.priority"
+                                        [severity]="getPrioritySeverity(ticket.priority)"></p-tag>
+                                </div>
+                                <h4 class="m-0 mb-1 text-gray-800 line-height-3">{{ ticket.title }}</h4>
+
+                                <div class="flex align-items-center mt-3 gap-2">
+                                    <div class="w-1.5rem h-1.5rem bg-primary text-white flex border-circle align-items-center justify-content-center text-xs"
+                                        pTooltip="{{ ticket.assignedTo }}">
+                                        {{ ticket.assignedTo ? ticket.assignedTo.charAt(0).toUpperCase() : '?' }}
+                                    </div>
+                                    <span class="text-xs text-gray-500"><i class="pi pi-calendar mr-1"></i>{{
+                                        ticket.dueDate
+                                        | date:'dd/MM/yy' }}</span>
+                                </div>
+                            </p-card>
+
+                            <div *ngIf="getTicketsByStatus(colStatus).length === 0" class="kanban-empty">
+                                Arrastra un ticket aquí
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </p-tabpanel>
+        </p-tabpanels>
+    </p-tabs>
+</div>
+
+<!-- MODAL NUEVO/EDITAR TICKET -->
+<p-dialog [(visible)]="showTicketDialog" [style]="{width: '50vw'}"
+    [header]="isEditingOption ? 'Editar Ticket' : 'Nuevo Ticket'" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <form [formGroup]="ticketForm">
+
+            <div class="field mb-3">
+                <label for="title" class="font-medium">Título del Problema</label>
+                <input type="text" pInputText id="title" formControlName="title" placeholder="Ej. Bug de login" />
+                <small class="p-error block"
+                    *ngIf="ticketForm.get('title')?.invalid && ticketForm.get('title')?.touched">Requerido.</small>
+            </div>
+
+            <div class="field mb-3">
+                <label for="desc" class="font-medium">Descripción</label>
+                <textarea id="desc" rows="3" pInputTextarea formControlName="description"
+                    placeholder="Ingresa contexto suficiente..."></textarea>
+                <small class="p-error block"
+                    *ngIf="ticketForm.get('description')?.invalid && ticketForm.get('description')?.touched">Requerido.</small>
+            </div>
+
+            <div class="formgrid grid gap-3 mb-3">
+                <div class="col-12 md:col-6 m-0">
+                    <label class="font-medium mb-1 block">Estado</label>
+                    <p-select [options]="statusOptions" formControlName="status" appendTo="body"
+                        styleClass="w-full"></p-select>
+                </div>
+                <div class="col-12 md:col-6 m-0">
+                    <label class="font-medium mb-1 block">Prioridad</label>
+                    <p-select [options]="priorityOptions" formControlName="priority" appendTo="body"
+                        styleClass="w-full"></p-select>
+                </div>
+            </div>
+
+            <div class="formgrid grid gap-3 mb-3">
+                <div class="col-12 md:col-6 m-0">
+                    <label class="font-medium mb-1 block">Asignado A (Miembro)</label>
+                    <p-select [options]="members" optionLabel="email" optionValue="email" formControlName="assignedTo"
+                        appendTo="body" placeholder="Selecciona integrante" styleClass="w-full"></p-select>
+                    <small class="p-error block"
+                        *ngIf="ticketForm.get('assignedTo')?.invalid && ticketForm.get('assignedTo')?.touched">Requerido
+                        asignar a alguien.</small>
+                </div>
+                <div class="col-12 md:col-6 m-0">
+                    <label class="font-medium mb-1 block">Fecha Límite</label>
+                    <p-datepicker formControlName="dueDate" appendTo="body" dateFormat="dd/mm/yy" [showIcon]="true"
+                        styleClass="w-full"></p-datepicker>
+                </div>
+            </div>
+
+            <div class="field mb-1" *ngIf="isEditingOption">
+                <label for="comments" class="font-medium block mb-2">Comentarios / Notas</label>
+                <textarea id="comments" rows="2" pInputTextarea formControlName="comments" class="w-full"
+                    placeholder="Agrega un comentario sobre tu trabajo..."></textarea>
+            </div>
+
+            <!-- HISTORIAL DE CAMBIOS -->
+            <div *ngIf="isEditingOption && currentTicketHistory.length > 0" class="mt-4 border-top-1 border-300 pt-3">
+                <h4 class="m-0 mb-3 text-gray-700 font-medium"><i class="pi pi-history mr-2"></i>Historial de Cambios
+                </h4>
+                <ul class="list-none p-0 m-0">
+                    <li *ngFor="let record of currentTicketHistory"
+                        class="text-sm border-bottom-1 border-200 pb-2 mb-2 text-gray-600">
+                        <span class="font-bold text-gray-800">{{ record.user }}</span> {{ record.comment }}
+                        <span class="text-xs text-gray-400 ml-1">({{ record.date | date:'dd/MMM/yy HH:mm' }})</span>
+                    </li>
+                </ul>
+            </div>
+
+        </form>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary"
+            (click)="hideTicketDialog()"></button>
+        <button pButton pRipple label="Guardar Ticket" icon="pi pi-check" class="p-button-primary"
+            (click)="saveTicket()"></button>
+    </ng-template>
+</p-dialog>

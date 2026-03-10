@@ -1,82 +1,291 @@
-.page-header {
-    margin-bottom: 2rem;
-}
-
-.profile-container {
+.page-container {
+    padding: var(--content-padding, 1.5rem);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
-    max-width: 900px;
-}
-
-::ng-deep .profile-card .p-card-body {
-    padding: 2rem;
-}
-
-.profile-header {
-    display: flex;
-    align-items: center;
     gap: 1.5rem;
-    margin-bottom: 1rem;
+    max-width: 1300px;
+    margin: 0 auto;
 }
 
-.profile-title {
-    flex-grow: 1;
+.header-section {
     display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.profile-details-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    padding: 1rem 0;
-}
-
-.detail-item {
-    display: flex;
+    justify-content: space-between;
     align-items: flex-start;
-    gap: 1rem;
 }
 
-.detail-icon {
-    font-size: 1.25rem;
-    color: var(--primary-color);
-    margin-top: 0.2rem;
+.page-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-color, #1e293b);
+    letter-spacing: -0.025em;
 }
 
-.detail-content {
+.page-subtitle {
+    margin: 0;
+    color: var(--text-color-secondary, #64748b);
+    font-size: 1rem;
+}
+
+.profile-layout {
     display: flex;
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+@media (max-width: 900px) {
+    .profile-layout {
+        flex-direction: column;
+    }
+}
+
+.col-12 {
+    width: 100%;
+}
+
+.md-col-4 {
+    flex: 0 0 calc(33.3333% - 0.75rem);
+    max-width: calc(33.3333% - 0.75rem);
+}
+
+.md-col-8 {
+    flex: 0 0 calc(66.6666% - 0.75rem);
+    max-width: calc(66.6666% - 0.75rem);
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
     flex-direction: column;
-    gap: 0.25rem;
 }
 
-.detail-label {
-    color: var(--text-color-secondary);
-    font-size: 0.9rem;
-    font-weight: 500;
+.items-center {
+    align-items: center;
 }
 
-.detail-value {
-    color: var(--text-color);
-    font-weight: 600;
+.justify-center {
+    justify-content: center;
 }
 
-.skills-section {
-    padding-top: 1rem;
+.justify-content-end {
+    justify-content: flex-end;
 }
 
-.skills-container {
-    display: flex;
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.flex-wrap {
     flex-wrap: wrap;
+}
+
+.gap-2 {
     gap: 0.5rem;
 }
 
-::ng-deep .skill-tag {
-    background-color: var(--surface-100);
-    color: var(--text-color);
-    border: 1px solid var(--surface-border);
-    padding: 0.4rem 0.8rem;
+.gap-4 {
+    gap: 1.5rem;
+}
+
+.p-4 {
+    padding: 1.5rem;
+}
+
+.p-5 {
+    padding: 2rem;
+}
+
+.mt-1 {
+    margin-top: 0.25rem;
+}
+
+.mt-2 {
+    margin-top: 0.5rem;
+}
+
+.mt-3 {
+    margin-top: 1rem;
+}
+
+.mt-4 {
+    margin-top: 1.5rem;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
+.my-4 {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.my-5 {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.mr-2 {
+    margin-right: 0.5rem;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.h-full {
+    height: 100%;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.block {
+    display: block;
+}
+
+/* Custom Text Styles */
+.user-fullname {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-color, #1e293b);
+    margin: 1rem 0 0.25rem 0;
+}
+
+.user-handle {
+    color: var(--text-color-secondary, #64748b);
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.skills-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color, #334155);
+    margin-bottom: 1rem;
+}
+
+.form-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color, #1e293b);
+    margin: 0 0 0.25rem 0;
+}
+
+.form-subtitle {
+    color: var(--text-color-secondary, #64748b);
+    margin: 0 0 1.5rem 0;
     font-size: 0.9rem;
+}
+
+/* Grid & Form fields */
+.formgrid {
+    display: grid;
+    align-items: flex-start;
+}
+
+@media (min-width: 768px) {
+    .md-grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.field label {
+    font-weight: 500;
+    color: var(--text-color, #334155);
+    font-size: 0.95rem;
+}
+
+/* Component overrides */
+::ng-deep .saas-card-component {
+    border-radius: var(--border-radius-lg, 16px) !important;
+    box-shadow: var(--card-shadow, 0 4px 6px -1px rgba(0, 0, 0, 0.05)) !important;
+    border: 1px solid var(--surface-border, #e2e8f0);
+}
+
+::ng-deep .saas-card-component .p-card-body {
+    height: 100%;
+}
+
+::ng-deep .custom-avatar-size {
+    width: 7rem !important;
+    height: 7rem !important;
+}
+
+::ng-deep .custom-avatar-size .p-avatar-text {
+    font-size: 2.5rem !important;
+}
+
+/* Danger Zone - Premium SaaS Red Styling */
+.danger-zone {
+    background-color: #fef2f2;
+    /* softest red bg */
+    border: 1px solid #fecaca;
+    /* red border */
+    border-radius: var(--border-radius, 12px);
+    transition: all 0.2s ease-in-out;
+}
+
+.danger-zone:hover {
+    background-color: #fee2e2;
+    border-color: #fca5a5;
+}
+
+.danger-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+    .danger-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.danger-title {
+    color: #b91c1c;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+}
+
+.danger-description {
+    color: #991b1b;
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.4;
 }

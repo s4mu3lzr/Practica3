@@ -5,7 +5,9 @@ import { RegisterComponent } from './pages/auth/register/register';
 import { MainLayoutComponent } from './layout/main-layout/main-layout';
 import { HomeComponent } from './pages/home/home';
 import { GroupComponent } from './pages/group/group';
+import { GroupManageComponent } from './pages/group-manage/group-manage';
 import { UserComponent } from './pages/user/user';
+import { UserManagementComponent } from './pages/user-management/user-management';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },
@@ -24,7 +26,8 @@ export const routes: Routes = [
     path: 'group',
     component: MainLayoutComponent,
     children: [
-      { path: '', component: GroupComponent }
+      { path: '', component: GroupComponent },
+      { path: 'manage/:id', component: GroupManageComponent }
     ]
   },
   {
@@ -32,6 +35,13 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     children: [
       { path: '', component: UserComponent }
+    ]
+  },
+  {
+    path: 'admin/users',
+    component: MainLayoutComponent,
+    children: [
+      { path: '', component: UserManagementComponent }
     ]
   }
 ];
