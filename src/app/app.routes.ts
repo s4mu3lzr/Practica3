@@ -7,7 +7,7 @@ import { HomeComponent } from './pages/home/home';
 import { GroupComponent } from './pages/group/group';
 import { GroupManageComponent } from './pages/group-manage/group-manage';
 import { UserComponent } from './pages/user/user';
-import { UserManagementComponent } from './pages/user-management/user-management';
+import { UserManagementComponent } from './pages/user-management';
 
 export const routes: Routes = [
   { path: '', component: LandingPageComponent },

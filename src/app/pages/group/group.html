@@ -7,7 +7,12 @@
             <h1 class="page-title">Gestión de Grupos</h1>
             <p class="page-subtitle">Administra los grupos de alumnos, niveles y tickets asociados.</p>
         </div>
-        <p-button label="Nuevo Grupo" icon="pi pi-plus" (onClick)="openNew()" styleClass="p-button-primary"></p-button>
+        <div [pTooltip]="securityService.hasPermission('group:add') ? '' : 'No tienes los permisos necesarios'"
+            tooltipPosition="left">
+            <p-button label="Nuevo Grupo" icon="pi pi-plus" (onClick)="openNew()" styleClass="p-button-primary"
+                [disabled]="!securityService.hasPermission('group:add')"
+                [style]="{'opacity': securityService.hasPermission('group:add') ? '1' : '0.4'}"></p-button>
+        </div>
     </div>
 
     <p-card styleClass="saas-card-component">
@@ -49,12 +54,27 @@
                     <td>
                         <div class="action-buttons">
                             <!-- Link a gestión interna -->
-                            <p-button icon="pi pi-cog" [rounded]="true" [text]="true" severity="secondary"
-                                pTooltip="Gestionar" [routerLink]="['/group/manage', group.id]"></p-button>
-                            <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
-                                pTooltip="Editar" (onClick)="editGroup(group)"></p-button>
-                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
-                                pTooltip="Eliminar" (onClick)="deleteGroup(group)"></p-button>
+                            <span
+                                [pTooltip]="securityService.hasPermission('group:edit') ? 'Gestionar' : 'No tienes los permisos necesarios'">
+                                <p-button icon="pi pi-cog" [rounded]="true" [text]="true" severity="secondary"
+                                    [routerLink]="securityService.hasPermission('group:edit') ? ['/group/manage', group.id] : null"
+                                    [disabled]="!securityService.hasPermission('group:edit')"
+                                    [style]="{'opacity': securityService.hasPermission('group:edit') ? '1' : '0.4'}"></p-button>
+                            </span>
+                            <span
+                                [pTooltip]="securityService.hasPermission('group:edit') ? 'Editar' : 'No tienes los permisos necesarios'">
+                                <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                    (onClick)="editGroup(group)"
+                                    [disabled]="!securityService.hasPermission('group:edit')"
+                                    [style]="{'opacity': securityService.hasPermission('group:edit') ? '1' : '0.4'}"></p-button>
+                            </span>
+                            <span
+                                [pTooltip]="securityService.hasPermission('group:delete') ? 'Eliminar' : 'No tienes los permisos necesarios'">
+                                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                    (onClick)="deleteGroup(group)"
+                                    [disabled]="!securityService.hasPermission('group:delete')"
+                                    [style]="{'opacity': securityService.hasPermission('group:delete') ? '1' : '0.4'}"></p-button>
+                            </span>
                         </div>
                     </td>
                 </tr>

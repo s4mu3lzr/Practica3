@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 
 import { CardModule } from 'primeng/card';
@@ -15,6 +15,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TagModule } from 'primeng/tag';
 import { SelectModule } from 'primeng/select';
+import { TooltipModule } from 'primeng/tooltip';
 
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DataService } from '../../services/data.service';
@@ -39,7 +40,8 @@ import { Group } from '../../models/group.model';
         TextareaModule,
         ToolbarModule,
         TagModule,
-        SelectModule
+        SelectModule,
+        TooltipModule
     ],
     providers: [ConfirmationService, MessageService],
     templateUrl: './group.html',
@@ -58,7 +60,8 @@ export class GroupComponent implements OnInit {
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private dataService: DataService,
-        private securityService: SecurityService
+        public securityService: SecurityService,
+        private router: Router
     ) {
         this.groupForm = this.fb.group({
             name: ['', Validators.required],

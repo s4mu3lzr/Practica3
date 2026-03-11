@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
 import { DataService } from '../../services/data.service';
 import { Group } from '../../models/group.model';
@@ -8,7 +8,10 @@ import { User } from '../../models/user.model';
 import { Ticket, TicketStatus, TicketPriority, TicketChange } from '../../models/ticket.model';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { SecurityService } from '../../security/security';
-import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDropList } from '@angular/cdk/drag-drop';
+import { CdkDrag } from '@angular/cdk/drag-drop';
+import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 
 // PrimeNG Modules
 import { TabsModule } from 'primeng/tabs';
@@ -35,7 +38,7 @@ import { TooltipModule } from 'primeng/tooltip';
         TabsModule, TableModule, ButtonModule, InputGroupModule, InputGroupAddonModule,
         InputTextModule, DialogModule, ConfirmDialogModule, ToastModule,
         SelectButtonModule, SelectModule, DatePickerModule, CardModule, TagModule, TooltipModule,
-        DragDropModule
+        CdkDropList, CdkDrag, CdkDropListGroup
     ],
     providers: [MessageService, ConfirmationService],
     templateUrl: './group-manage.html',
@@ -62,17 +65,19 @@ export class GroupManageComponent implements OnInit {
 
     // FASE 5: Dashboard del Grupo (KPIs locales)
     get groupKpis() {
+        const user = this.securityService.getCurrentUser();
+        const isAdmin = this.securityService.hasPermission('group:edit');
+        const relevantTickets = isAdmin ? this.tickets : this.tickets.filter(t => t.assignedTo === user?.email);
+
         return {
-            total: this.tickets.length,
-            pendiente: this.tickets.filter(t => t.status === 'Pendiente').length,
-            enProgreso: this.tickets.filter(t => t.status === 'En Progreso').length,
-            hechos: this.tickets.filter(t => t.status === 'Finalizado' || t.status === 'Revisión').length
+            total: relevantTickets.length,
+            pendiente: relevantTickets.filter(t => t.status === 'Pendiente').length,
+            enProgreso: relevantTickets.filter(t => t.status === 'En Progreso').length,
+            hechos: relevantTickets.filter(t => t.status === 'Finalizado' || t.status === 'Revisión').length
         };
     }
 
-    get recentTickets() {
-        return [...this.tickets].sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime()).slice(0, 4);
-    }
+
 
     // Filtros
     quickFilterOptions = [
@@ -98,7 +103,8 @@ export class GroupManageComponent implements OnInit {
         private fb: FormBuilder,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
-        public securityService: SecurityService
+        public securityService: SecurityService,
+        private router: Router
     ) { }
 
     ngOnInit(): void {
@@ -136,11 +142,18 @@ export class GroupManageComponent implements OnInit {
 
     get filteredTickets(): Ticket[] {
         const user = this.securityService.getCurrentUser();
-        if (this.activeFilter === 'all') return this.tickets;
-        if (this.activeFilter === 'mine') return this.tickets.filter(t => t.assignedTo === user?.email);
-        if (this.activeFilter === 'unassigned') return this.tickets.filter(t => !t.assignedTo || t.assignedTo.trim() === '');
-        if (this.activeFilter === 'high_priority') return this.tickets.filter(t => t.priority === 'Alta');
-        return this.tickets;
+        const isAdmin = this.securityService.hasPermission('group:edit');
+
+        let baseTickets = this.tickets;
+        if (!isAdmin) {
+            baseTickets = this.tickets.filter(t => t.assignedTo === user?.email);
+        }
+
+        if (this.activeFilter === 'all') return baseTickets;
+        if (this.activeFilter === 'mine') return baseTickets.filter(t => t.assignedTo === user?.email);
+        if (this.activeFilter === 'unassigned') return baseTickets.filter(t => !t.assignedTo || t.assignedTo.trim() === '');
+        if (this.activeFilter === 'high_priority') return baseTickets.filter(t => t.priority === 'Alta');
+        return baseTickets;
     }
 
     // ---- MEMBERS LOGIC ----

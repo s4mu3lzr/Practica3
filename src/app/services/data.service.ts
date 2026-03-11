@@ -11,7 +11,8 @@ export class DataService {
     private users: User[] = [
         { id: '1', name: 'Alce Ruiz', email: 'alce@demo.com', permissions: ['group:add', 'group:edit', 'group:delete', 'user:crud', 'ticket:create', 'ticket:edit'] },
         { id: '2', name: 'Maria Lopez', email: 'maria@demo.com', permissions: ['ticket:create', 'ticket:edit'] },
-        { id: '3', name: 'Juan Perez', email: 'juan@demo.com', permissions: ['ticket:create'] }
+        { id: '3', name: 'Juan Perez', email: 'juan@demo.com', permissions: ['ticket:create'] },
+        { id: '4', name: 'Samuel', email: 'samu@gmail.com', permissions: [] }
     ];
 
     private groups: Group[] = [
@@ -172,12 +173,13 @@ export class DataService {
         }
     }
 
-    getDashboardKPIs(): { total: number, pendiente: number, enProgreso: number, revision: number } {
+    getDashboardKPIs(userEmail?: string): { total: number, pendiente: number, enProgreso: number, revision: number } {
+        const relevantTickets = userEmail ? this.tickets.filter(t => t.assignedTo === userEmail) : this.tickets;
         return {
-            total: this.tickets.length,
-            pendiente: this.tickets.filter(t => t.status === 'Pendiente').length,
-            enProgreso: this.tickets.filter(t => t.status === 'En Progreso').length,
-            revision: this.tickets.filter(t => t.status === 'Revisión').length
+            total: relevantTickets.length,
+            pendiente: relevantTickets.filter(t => t.status === 'Pendiente').length,
+            enProgreso: relevantTickets.filter(t => t.status === 'En Progreso').length,
+            revision: relevantTickets.filter(t => t.status === 'Revisión').length
         };
     }
 }

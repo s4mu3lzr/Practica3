@@ -1,3 +1,6 @@
+/* =========================================================
+   1. ESTILOS VISUALES Y DISEÑO
+   ========================================================= */
 .auth-container {
     display: flex;
     justify-content: center;
@@ -44,7 +47,7 @@
 }
 
 .max-w-lg {
-    max-width: 550px !important;
+    max-width: 650px !important; /* Ligeramente más ancho para que quepan bien las 2 columnas */
 }
 
 .auth-header {
@@ -89,83 +92,59 @@
     font-size: 0.95rem;
 }
 
-.field {
-    margin-bottom: 1.25rem;
-}
-
 .field label {
     font-size: 0.95rem;
     color: var(--text-color);
-    font-weight: 500;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
 }
 
-.input-container {
+/* =========================================================
+   2. CORRECCIÓN ESTRUCTURAL PARA COMPONENTES PRIMENG
+   ========================================================= */
+
+/* Forzar que el host del componente ocupe todo el ancho */
+:host ::ng-deep p-password,
+:host ::ng-deep p-datepicker,
+:host ::ng-deep p-calendar {
     width: 100%;
+    display: block;
 }
 
-.custom-pl {
-    padding-left: 2.5rem !important;
+/* Forzar que el contenedor interno (.p-component) ocupe el 100% */
+:host ::ng-deep .p-password,
+:host ::ng-deep .p-datepicker,
+:host ::ng-deep .p-calendar {
+    width: 100%;
+    display: flex; 
 }
 
-.z-10 {
-    z-index: 10 !important;
+/* Forzar que el input real de texto (.p-inputtext) se expanda al máximo */
+:host ::ng-deep .p-password input,
+:host ::ng-deep .p-datepicker input,
+:host ::ng-deep .p-calendar input {
+    width: 100%;
+    flex: 1 1 auto;
 }
 
-/* Custom prime icon alignments in input */
-::ng-deep .p-input-icon-left>i,
-::ng-deep .p-input-icon-right>i {
-    z-index: 10;
+/* Ajustes para los íconos internos (el ojito de la contraseña) */
+:host ::ng-deep .p-password-icon {
+    right: 0.75rem;
+    color: var(--text-color-secondary);
 }
 
-/* Pure CSS Responsive Row */
-.responsive-row {
-    display: flex;
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
+/* Asegurar que los mensajes de error se vean limpios y alineados */
+.p-error {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    display: block;
 }
 
-.responsive-col {
-    display: flex;
-    flex-direction: column;
-}
-
-.flex-grow-7 {
-    flex: 1.4;
-}
-
-.flex-grow-5 {
-    flex: 1;
-    min-width: 0;
-}
-
-/* Responsive Overrides */
 @media (max-width: 768px) {
     .auth-card {
         padding: 2rem 1.5rem;
     }
-
-    .logo-circle {
-        width: 56px;
-        height: 56px;
-        margin-bottom: 1rem;
-    }
-
-    .auth-title {
-        font-size: 1.5rem;
-    }
-
-    .responsive-row {
-        flex-direction: column;
-        gap: 0;
-        margin-bottom: 0;
-    }
-
-    .responsive-col {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-
-    /* Ocultar halos en mobile para rendimiento */
     .auth-container::before,
     .auth-container::after {
         display: none;

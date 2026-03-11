@@ -29,7 +29,17 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.kpis = this.dataService.getDashboardKPIs();
-    this.dataService.getGroups().subscribe(g => this.groups = g);
+    const user = this.securityService.getCurrentUser();
+    const isAdmin = this.securityService.hasPermission('group:edit');
+
+    this.kpis = this.dataService.getDashboardKPIs(isAdmin ? undefined : user?.email);
+
+    this.dataService.getGroups().subscribe(g => {
+      if (isAdmin) {
+        this.groups = g;
+      } else {
+        this.groups = g.filter(group => group.memberIds?.includes(user?.id || ''));
+      }
+    });
   }
 }
