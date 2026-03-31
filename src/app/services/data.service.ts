@@ -3,6 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { User } from '../models/user.model';
 import { Group } from '../models/group.model';
 import { Ticket, TicketStatus } from '../models/ticket.model';
+import { SupabaseService } from './supabase.service';
 
 @Injectable({
     providedIn: 'root'
@@ -55,26 +56,57 @@ export class DataService {
     private groupsSubject = new BehaviorSubject<Group[]>(this.groups);
     private ticketsSubject = new BehaviorSubject<Ticket[]>(this.tickets);
 
-    constructor() { }
+    constructor(private supabaseService: SupabaseService) {
+        this.loadUsers();
+    }
+
+    async loadUsers() {
+        const { data, error } = await this.supabaseService.client.from('usuarios').select('*');
+        if (error) {
+            console.error('Error al cargar usuarios desde Supabase:', error);
+            return;
+        }
+        this.users = data as User[] || [];
+        this.usersSubject.next([...this.users]);
+    }
 
     getUsers(): Observable<User[]> {
         return this.usersSubject.asObservable();
     }
 
-    addUser(user: User) {
-        this.users.push(user);
-        this.usersSubject.next([...this.users]);
-    }
-
-    updateUser(user: User) {
-        const idx = this.users.findIndex(u => u.id === user.id);
-        if (idx > -1) {
-            this.users[idx] = user;
+    async addUser(user: User) {
+        const { data, error } = await this.supabaseService.client.from('usuarios').insert([user]).select();
+        if (error) {
+            console.error('Error al agregar usuario:', error);
+            return;
+        }
+        if (data && data.length > 0) {
+            this.users.push(data[0] as User);
             this.usersSubject.next([...this.users]);
         }
     }
 
-    deleteUser(id: string) {
+    async updateUser(user: User) {
+        const { data, error } = await this.supabaseService.client.from('usuarios').update(user).eq('id', user.id).select();
+        if (error) {
+            console.error('Error al actualizar usuario:', error);
+            return;
+        }
+        if (data && data.length > 0) {
+            const idx = this.users.findIndex(u => u.id === user.id);
+            if (idx > -1) {
+                this.users[idx] = data[0] as User;
+                this.usersSubject.next([...this.users]);
+            }
+        }
+    }
+
+    async deleteUser(id: string) {
+        const { error } = await this.supabaseService.client.from('usuarios').delete().eq('id', id);
+        if (error) {
+            console.error('Error al eliminar usuario:', error);
+            return;
+        }
         this.users = this.users.filter(u => u.id !== id);
         this.usersSubject.next([...this.users]);
     }

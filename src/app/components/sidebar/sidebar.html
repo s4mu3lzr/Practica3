@@ -1,28 +1,58 @@
-<div class="mi-sidebar">
-  <div style="text-align: center; margin-bottom: 2rem;">
-    <i class="pi pi-box" style="font-size: 2.5rem; color: var(--primary-color);"></i>
-    <h3 style="color: var(--text-color); margin-top: 10px;">ERP System</h3>
-  </div>
+<nav class="sidebar">
 
-  <div style="display: flex; flex-direction: column; gap: 10px; height: 100%;">
-    <p-button label="Inicio" icon="pi pi-home" routerLink="/home" styleClass="p-button-text"
-      [style]="{'width': '100%', 'text-align': 'left'}"></p-button>
-    <p-button label="Grupos" icon="pi pi-users" routerLink="/group" styleClass="p-button-text"
-      [style]="{'width': '100%', 'text-align': 'left'}"></p-button>
-    <p-button label="Usuario" icon="pi pi-user" routerLink="/user" styleClass="p-button-text"
-      [style]="{'width': '100%', 'text-align': 'left'}"></p-button>
-
-    <p-button *ngIf="securityService.hasPermission('user:crud')" label="Admin Usuarios" icon="pi pi-shield"
-      routerLink="/admin/users" styleClass="p-button-text"
-      [style]="{'width': '100%', 'text-align': 'left', 'color': 'var(--primary-color)'}"></p-button>
-
-    <div style="flex-grow: 1;"></div>
-
-    <div style="text-align: center; margin-bottom: 10px;">
-      <span style="color: var(--text-color-secondary); font-size: 0.8rem;">Versión App (v1.0.0)</span>
+  <!-- ── Logo / Brand ── -->
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <i class="pi pi-box"></i>
     </div>
-
-    <p-button label="Cerrar Sesión" icon="pi pi-sign-out" severity="danger" styleClass="p-button-outlined"
-      [style]="{'width': '100%'}" (onClick)="logout()"></p-button>
+    <div class="brand-text">
+      <span class="brand-name">ERP System</span>
+      <span class="brand-tag">Pro v1.0</span>
+    </div>
   </div>
-</div>
+
+  <!-- ── Nav Links ── -->
+  <div class="sidebar-menu">
+    <p class="menu-label">Navegación</p>
+
+    <a routerLink="/home" routerLinkActive="nav-active" class="nav-item">
+      <span class="nav-icon"><i class="pi pi-home"></i></span>
+      <span class="nav-label">Inicio</span>
+    </a>
+
+    <a routerLink="/group" routerLinkActive="nav-active" class="nav-item">
+      <span class="nav-icon"><i class="pi pi-users"></i></span>
+      <span class="nav-label">Grupos</span>
+    </a>
+
+    <a routerLink="/user" routerLinkActive="nav-active" class="nav-item">
+      <span class="nav-icon"><i class="pi pi-user"></i></span>
+      <span class="nav-label">Mi Perfil</span>
+    </a>
+
+    <ng-container *ngIf="securityService.hasPermission('user:crud')">
+      <p class="menu-label" style="margin-top:1.25rem;">Administración</p>
+      <a routerLink="/admin/users" routerLinkActive="nav-active" class="nav-item nav-item--admin">
+        <span class="nav-icon"><i class="pi pi-shield"></i></span>
+        <span class="nav-label">Gestión de Usuarios</span>
+      </a>
+    </ng-container>
+  </div>
+
+  <!-- ── Bottom: User + Logout ── -->
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">
+        {{ (securityService.getCurrentUser()?.name || 'U').charAt(0).toUpperCase() }}
+      </div>
+      <div class="user-info">
+        <span class="user-name">{{ securityService.getCurrentUser()?.name || 'Usuario' }}</span>
+        <span class="user-email">{{ securityService.getCurrentUser()?.email || '' }}</span>
+      </div>
+    </div>
+    <button class="logout-btn" (click)="logout()" title="Cerrar sesión">
+      <i class="pi pi-sign-out"></i>
+    </button>
+  </div>
+
+</nav>
