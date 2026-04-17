@@ -15,13 +15,16 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
+import { PasswordModule } from 'primeng/password';
+import { RouterModule } from '@angular/router';
 
 @Component({
     selector: 'app-user-management',
     standalone: true,
     imports: [
-        CommonModule, ReactiveFormsModule, TableModule, ButtonModule, DialogModule,
-        ConfirmDialogModule, MultiSelectModule, InputTextModule, TagModule, ToastModule
+        CommonModule, ReactiveFormsModule, RouterModule,
+        TableModule, ButtonModule, DialogModule,
+        ConfirmDialogModule, MultiSelectModule, InputTextModule, TagModule, ToastModule, PasswordModule
     ],
     providers: [MessageService, ConfirmationService],
     templateUrl: './user-management.html',
@@ -30,18 +33,19 @@ import { ToastModule } from 'primeng/toast';
 export class UserManagementComponent implements OnInit {
 
     users: User[] = [];
+    loading: boolean = false;
 
     showDialog: boolean = false;
     isEditMode: boolean = false;
     userForm!: FormGroup;
 
     availablePermissions = [
-        { label: 'Grupos (Ver/Crear)', value: 'group:add' },
-        { label: 'Grupos (Editar)', value: 'group:edit' },
-        { label: 'Grupos (Eliminar)', value: 'group:delete' },
-        { label: 'Usuarios (CRUD)', value: 'user:crud' },
-        { label: 'Tickets (Crear)', value: 'ticket:create' },
-        { label: 'Tickets (Editar)', value: 'ticket:edit' }
+        { label: '👥 Grupos (Ver/Crear)', value: 'group:add' },
+        { label: '✏️ Grupos (Editar)', value: 'group:edit' },
+        { label: '🗑️ Grupos (Eliminar)', value: 'group:delete' },
+        { label: '👤 Usuarios (CRUD)', value: 'user:crud' },
+        { label: '🎫 Tickets (Crear)', value: 'ticket:create' },
+        { label: '📝 Tickets (Editar)', value: 'ticket:edit' }
     ];
 
     constructor(
@@ -53,28 +57,37 @@ export class UserManagementComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this.loadUsers();
-
         this.userForm = this.fb.group({
             id: [''],
             name: ['', Validators.required],
             email: ['', [Validators.required, Validators.email]],
+            password: [''],
             permissions: [[]]
         });
+        this.loadUsers();
     }
 
     loadUsers() {
+        this.loading = true;
+        this.dataService.forceReloadUsers();
         this.dataService.getUsers().subscribe(users => {
-            this.users = users;
+            if (users && users.length > 0) {
+                this.users = users;
+                this.loading = false;
+            } else if (!this.loading) {
+                // Datos vacíos tras carga completa
+                this.users = [];
+            }
         });
+        // Safety timeout: si en 8s no llegan datos, quitar spinner
+        setTimeout(() => { this.loading = false; }, 8000);
     }
 
     openNew() {
         this.isEditMode = false;
-        this.userForm.reset({
-            id: 'u' + Math.floor(Math.random() * 10000),
-            permissions: []
-        });
+        this.userForm.reset({ permissions: [] });
+        this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(8)]);
+        this.userForm.get('password')?.updateValueAndValidity();
         this.showDialog = true;
     }
 
@@ -84,8 +97,11 @@ export class UserManagementComponent implements OnInit {
             id: user.id,
             name: user.name,
             email: user.email,
+            password: '',
             permissions: user.permissions || []
         });
+        this.userForm.get('password')?.clearValidators();
+        this.userForm.get('password')?.updateValueAndValidity();
         this.showDialog = true;
     }
 
@@ -100,7 +116,7 @@ export class UserManagementComponent implements OnInit {
             accept: () => {
                 this.dataService.deleteUser(user.id);
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Usuario eliminado' });
-                this.loadUsers();
+                setTimeout(() => this.loadUsers(), 500);
             }
         });
     }
@@ -112,23 +128,55 @@ export class UserManagementComponent implements OnInit {
         }
 
         const val = this.userForm.value;
-        const userToSave: User = {
-            id: val.id,
-            name: val.name,
-            email: val.email,
-            permissions: val.permissions
-        };
 
         if (this.isEditMode) {
-            this.dataService.updateUser(userToSave);
-            this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Usuario modificado.' });
+            const userToUpdate: User = {
+                id: val.id,
+                name: val.name,
+                email: val.email,
+                permissions: val.permissions || []
+            };
+            this.dataService.updateUserObservable(userToUpdate).subscribe({
+                next: () => {
+                    this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Usuario y permisos actualizados.' });
+                    this.showDialog = false;
+                    setTimeout(() => this.loadUsers(), 500);
+                },
+                error: (err: any) => {
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo actualizar.' });
+                }
+            });
         } else {
-            this.dataService.addUser(userToSave);
-            this.messageService.add({ severity: 'success', summary: 'Creado', detail: 'Usuario registrado exitosamente.' });
+            const newUser = {
+                name: val.name,
+                email: val.email,
+                password: val.password,
+                permissions: val.permissions || []
+            };
+            this.dataService.addUserObservable(newUser).subscribe({
+                next: () => {
+                    this.messageService.add({ severity: 'success', summary: 'Creado', detail: 'Usuario registrado exitosamente.' });
+                    this.showDialog = false;
+                    setTimeout(() => this.loadUsers(), 500);
+                },
+                error: (err: any) => {
+                    const msg = err.error?.data?.[0]?.error || 'Error al crear usuario';
+                    this.messageService.add({ severity: 'error', summary: 'Error', detail: msg });
+                }
+            });
         }
+    }
 
-        this.showDialog = false;
-        this.loadUsers();
+    getPermissionLabel(perm: string): string {
+        const found = this.availablePermissions.find(p => p.value === perm);
+        return found ? found.label : perm;
+    }
+
+    getPermSeverity(perm: string): 'success' | 'info' | 'warn' | 'danger' {
+        if (perm.includes('delete')) return 'danger';
+        if (perm.includes('crud') || perm.includes('edit')) return 'warn';
+        if (perm.includes('create') || perm.includes('add')) return 'success';
+        return 'info';
     }
 
     hideDialog() {

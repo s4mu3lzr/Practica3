@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -21,6 +21,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { DataService } from '../../services/data.service';
 import { SecurityService } from '../../security/security';
 import { Group } from '../../models/group.model';
+import { User } from '../../models/user.model';
 
 @Component({
     selector: 'app-group',
@@ -49,6 +50,7 @@ import { Group } from '../../models/group.model';
 })
 export class GroupComponent implements OnInit {
     groups: Group[] = [];
+    allUsers: User[] = [];
     nivelOptions = ['Básico', 'Intermedio', 'Avanzado'];
 
     groupDialog: boolean = false;
@@ -61,7 +63,8 @@ export class GroupComponent implements OnInit {
         private confirmationService: ConfirmationService,
         private dataService: DataService,
         public securityService: SecurityService,
-        private router: Router
+        private router: Router,
+        private cdr: ChangeDetectorRef
     ) {
         this.groupForm = this.fb.group({
             name: ['', Validators.required],
@@ -71,11 +74,18 @@ export class GroupComponent implements OnInit {
     }
 
     ngOnInit() {
+        this.dataService.getUsers().subscribe(u => {
+            this.allUsers = u;
+            this.cdr.markForCheck();
+        });
         this.loadGroups();
     }
 
     loadGroups() {
-        this.dataService.getGroups().subscribe(g => this.groups = g);
+        this.dataService.getGroups().subscribe(g => {
+            this.groups = g;
+            this.cdr.markForCheck();
+        });
     }
 
     openNew() {
@@ -143,5 +153,11 @@ export class GroupComponent implements OnInit {
 
     createId(): string {
         return Math.random().toString(36).substring(2, 9);
+    }
+
+    getAuthorName(authorId: string): string {
+        if (!authorId || authorId === 'Sistema') return 'Sistema';
+        const user = this.allUsers.find(u => u.id === authorId);
+        return user ? user.name : authorId.substring(0, 8) + '...';
     }
 }

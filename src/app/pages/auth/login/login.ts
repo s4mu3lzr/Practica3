@@ -6,7 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { SecurityService } from '../../../security/security'; // <-- ¡SIN EL .service!
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
@@ -22,7 +22,7 @@ export class LoginComponent {
     private fb: FormBuilder,
     private messageService: MessageService,
     private router: Router,
-    private securityService: SecurityService
+    private http: HttpClient
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email, Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)]],
@@ -38,15 +38,21 @@ export class LoginComponent {
 
     const { email, password } = this.loginForm.value;
 
-    if (this.securityService.login(email, password)) {
-      this.messageService.add({ severity: 'success', summary: 'Bienvenido', detail: 'Acceso autorizado' });
-
-      setTimeout(() => {
-        this.router.navigate(['/home']);
-      }, 1000);
-
-    } else {
-      this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: 'Credenciales incorrectas' });
-    }
+    this.http.post('http://localhost:4000/api/users/login', { email, password }).subscribe({
+      next: (res: any) => {
+        if (res && res.data && res.data.length > 0 && res.data[0].token) {
+          localStorage.setItem('token', res.data[0].token);
+          this.messageService.add({ severity: 'success', summary: 'Bienvenido', detail: 'Acceso autorizado' });
+          setTimeout(() => {
+            this.router.navigate(['/home']);
+          }, 1000);
+        } else {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Formato de respuesta inválido' });
+        }
+      },
+      error: (err) => {
+        this.messageService.add({ severity: 'error', summary: 'Acceso Denegado', detail: err.error?.message || 'Credenciales incorrectas' });
+      }
+    });
   }
 }

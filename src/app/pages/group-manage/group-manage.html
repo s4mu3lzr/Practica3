@@ -157,7 +157,7 @@
                         <ng-template pTemplate="body" let-ticket>
                             <tr>
                                 <td class="font-medium">{{ ticket.title }}</td>
-                                <td class="text-gray-600">{{ ticket.assignedTo }}</td>
+                                <td class="text-gray-600">{{ getUserName(ticket.assignedTo) }}</td>
                                 <td><p-tag [value]="ticket.priority"
                                         [severity]="getPrioritySeverity(ticket.priority)"></p-tag></td>
                                 <td><p-tag [value]="ticket.status"
@@ -193,10 +193,10 @@
 
                         <div class="kanban-col-body" cdkDropList [id]="colStatus"
                             [cdkDropListData]="getTicketsByStatus(colStatus)" (cdkDropListDropped)="drop($event)">
-                            <p-card *ngFor="let ticket of getTicketsByStatus(colStatus)" cdkDrag
+                            <p-card *ngFor="let ticket of getTicketsByStatus(colStatus)" cdkDrag [cdkDragDisabled]="!canDragTicket(ticket)"
                                 class="kanban-card cursor-pointer" (click)="editTicket(ticket)">
-                                <div class="flex justify-content-between align-items-start mb-2">
-                                    <span class="text-xs font-semibold text-gray-400">#{{ ticket.id.toUpperCase()
+                                <div class="flex justify-content-between align-items-start mb-2" [ngClass]="{'opacity-50': !canDragTicket(ticket)}">
+                                    <span class="text-xs font-semibold text-gray-400">#{{ ticket.id.substring(0,8).toUpperCase()
                                         }}</span>
                                     <p-tag [value]="ticket.priority"
                                         [severity]="getPrioritySeverity(ticket.priority)"></p-tag>
@@ -205,8 +205,8 @@
 
                                 <div class="flex align-items-center mt-3 gap-2">
                                     <div class="w-1.5rem h-1.5rem bg-primary text-white flex border-circle align-items-center justify-content-center text-xs"
-                                        pTooltip="{{ ticket.assignedTo }}">
-                                        {{ ticket.assignedTo ? ticket.assignedTo.charAt(0).toUpperCase() : '?' }}
+                                        [pTooltip]="getUserName(ticket.assignedTo)">
+                                        {{ getUserName(ticket.assignedTo).charAt(0).toUpperCase() }}
                                     </div>
                                     <span class="text-xs text-gray-500"><i class="pi pi-calendar mr-1"></i>{{
                                         ticket.dueDate
@@ -264,7 +264,7 @@
             <div class="formgrid grid gap-3 mb-3">
                 <div class="col-12 md:col-6 m-0">
                     <label class="font-medium mb-1 block">Asignado A (Miembro)</label>
-                    <p-select [options]="members" optionLabel="email" optionValue="email" formControlName="assignedTo"
+                    <p-select [options]="members" optionLabel="name" optionValue="id" formControlName="assignedTo"
                         appendTo="body" placeholder="Selecciona integrante" styleClass="w-full"></p-select>
                     <small class="p-error block"
                         *ngIf="ticketForm.get('assignedTo')?.invalid && ticketForm.get('assignedTo')?.touched">Requerido
@@ -302,7 +302,7 @@
     <ng-template pTemplate="footer">
         <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text p-button-secondary"
             (click)="hideTicketDialog()"></button>
-        <button pButton pRipple label="Guardar Ticket" icon="pi pi-check" class="p-button-primary"
+        <button *ngIf="canEditCurrentTicket" pButton pRipple label="Guardar Ticket" icon="pi pi-check" class="p-button-primary"
             (click)="saveTicket()"></button>
     </ng-template>
 </p-dialog>

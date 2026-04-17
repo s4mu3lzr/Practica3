@@ -14,7 +14,7 @@
         <div class="col-12 md-col-4">
             <p-card styleClass="saas-card-component text-center h-full">
                 <div class="flex flex-col items-center p-4">
-                    <p-avatar image="https://ui-avatars.com/api/?name=Samuel+de+Santiago&background=random"
+                    <p-avatar [image]="'https://ui-avatars.com/api/?name=' + userProfile.fullName + '&background=random'"
                         size="xlarge" shape="circle" styleClass="mb-3 custom-avatar-size"></p-avatar>
 
                     <h2 class="user-fullname">{{ userProfile.fullName }}</h2>

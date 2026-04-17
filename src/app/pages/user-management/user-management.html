@@ -14,44 +14,67 @@
         </div>
 
         <p-table [value]="users" [paginator]="true" [rows]="10" responsiveLayout="scroll" [rowHover]="true"
-            styleClass="p-datatable-sm">
+            [loading]="loading" styleClass="p-datatable-sm p-datatable-striped">
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 25%">Nombre</th>
-                    <th style="width: 25%">Correo</th>
-                    <th style="width: 35%">Permisos Asignados</th>
+                    <th style="width: 20%">Nombre</th>
+                    <th style="width: 22%">Correo</th>
+                    <th style="width: 43%">Permisos Asignados</th>
                     <th style="width: 15%" class="text-center">Acciones</th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-u>
                 <tr>
-                    <td class="font-medium">{{ u.name }}</td>
+                    <td class="font-medium">
+                        <span class="flex align-items-center gap-2">
+                            <span class="inline-flex align-items-center justify-content-center border-circle"
+                                style="width:2rem;height:2rem;background:var(--primary-color);color:white;font-weight:bold;font-size:0.85rem;">
+                                {{ u.name?.charAt(0)?.toUpperCase() }}
+                            </span>
+                            {{ u.name }}
+                        </span>
+                    </td>
                     <td class="text-gray-600">{{ u.email }}</td>
                     <td>
                         <div class="flex flex-wrap gap-1">
-                            <p-tag *ngFor="let perm of u.permissions" [value]="perm" [rounded]="true"
-                                severity="info"></p-tag>
-                            <span *ngIf="!u.permissions || u.permissions.length === 0" class="text-gray-400 text-sm">Sin
-                                permisos</span>
+                            <p-tag *ngFor="let perm of u.permissions" 
+                                [value]="getPermissionLabel(perm)" 
+                                [severity]="getPermSeverity(perm)"
+                                [rounded]="true"
+                                style="font-size:0.75rem"></p-tag>
+                            <span *ngIf="!u.permissions || u.permissions.length === 0"
+                                class="text-gray-400 text-sm italic">Sin permisos asignados</span>
                         </div>
                     </td>
                     <td class="text-center">
                         <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-success mr-2"
+                            pTooltip="Editar usuario" tooltipPosition="top"
                             (click)="editUser(u)"></button>
                         <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger"
+                            pTooltip="Eliminar usuario" tooltipPosition="top"
+                            [disabled]="u.email === 'admin_sys@demo.com'"
                             (click)="deleteUser(u)"></button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="4" class="text-center text-gray-400 py-4">
+                        <i class="pi pi-users text-4xl mb-2" style="display:block;opacity:0.3"></i>
+                        No hay usuarios registrados
                     </td>
                 </tr>
             </ng-template>
         </p-table>
 
-        <p-dialog [(visible)]="showDialog" [style]="{width: '450px'}"
+        <!-- DIALOG -->
+        <p-dialog [(visible)]="showDialog" [style]="{width: '500px'}"
             [header]="isEditMode ? 'Editar Usuario' : 'Nuevo Usuario'" [modal]="true" class="p-fluid">
             <ng-template pTemplate="content">
                 <form [formGroup]="userForm" class="mt-3">
                     <div class="field mb-3">
                         <label for="name" class="font-medium">Nombre Completo</label>
-                        <input type="text" pInputText id="name" formControlName="name" />
+                        <input type="text" pInputText id="name" formControlName="name" class="w-full" />
                         <small class="p-error block"
                             *ngIf="userForm.get('name')?.invalid && userForm.get('name')?.touched">El nombre es
                             requerido.</small>
@@ -59,17 +82,30 @@
 
                     <div class="field mb-3">
                         <label for="email" class="font-medium">Correo Electrónico</label>
-                        <input type="email" pInputText id="email" formControlName="email" />
+                        <input type="email" pInputText id="email" formControlName="email" class="w-full"
+                            [readonly]="isEditMode" />
                         <small class="p-error block"
                             *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched">Correo
                             inválido.</small>
                     </div>
 
+                    <div class="field mb-3" *ngIf="!isEditMode">
+                        <label for="password" class="font-medium">Contraseña</label>
+                        <p-password id="password" formControlName="password" [toggleMask]="true"
+                            styleClass="w-full" [feedback]="true"
+                            placeholder="Mínimo 8 caracteres"></p-password>
+                        <small class="p-error block"
+                            *ngIf="userForm.get('password')?.invalid && userForm.get('password')?.touched">
+                            La contraseña es requerida (mínimo 8 caracteres).
+                        </small>
+                    </div>
+
                     <div class="field mb-3">
                         <label for="permissions" class="font-medium block mb-2">Permisos del Sistema</label>
                         <p-multiSelect [options]="availablePermissions" formControlName="permissions"
-                            defaultLabel="Seleccionar permisos" optionLabel="label" optionValue="value" display="chip"
-                            appendTo="body" styleClass="w-full"></p-multiSelect>
+                            defaultLabel="Seleccionar permisos..." optionLabel="label" optionValue="value" display="chip"
+                            appendTo="body" styleClass="w-full" selectedItemsLabel="{0} permisos seleccionados"></p-multiSelect>
+                        <small class="text-gray-400">Los permisos controlan qué puede hacer este usuario en el sistema.</small>
                     </div>
                 </form>
             </ng-template>
@@ -84,7 +120,7 @@
 
     <ng-template #noAccess>
         <div class="text-center py-6">
-            <i class="pi pi-lock text-6xl text-red-400 mb-4"></i>
+            <i class="pi pi-lock text-6xl text-red-400 mb-4" style="display:block"></i>
             <h2 class="text-2xl text-gray-800 font-bold mb-2">Acceso Denegado</h2>
             <p class="text-gray-500 max-w-20rem mx-auto">No tienes los permisos requeridos (user:crud) para acceder a
                 este módulo.</p>
@@ -92,4 +128,5 @@
                 class="mt-4 p-button-outlined"></button>
         </div>
     </ng-template>
+
 </div>

@@ -47,7 +47,7 @@
                     <td><span class="font-medium text-gray-800">{{ group.name }}</span></td>
                     <td>{{ group.description }}</td>
                     <td><p-tag [value]="group.nivel" severity="info"></p-tag></td>
-                    <td>{{ group.autor }}</td>
+                    <td>{{ getAuthorName(group.autor) }}</td>
                     <td>
                         <p-tag [value]="group.membersCount.toString()" severity="secondary"></p-tag>
                     </td>

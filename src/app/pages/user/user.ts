@@ -31,6 +31,8 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { DataService } from '../../services/data.service';
 import { Ticket } from '../../models/ticket.model';
 
+import { SecurityService } from '../../security/security';
+
 @Component({
     selector: 'app-user',
     standalone: true,
@@ -56,17 +58,16 @@ import { Ticket } from '../../models/ticket.model';
 export class UserComponent implements OnInit {
     profileForm!: FormGroup;
 
-    // Datos mockeados del perfil
-    userProfile = {
-        fullName: 'Samuel de Santiago',
-        username: 'samuelds',
-        email: 'admin@erp.com',
-        address: 'Av. Universidad 123, Ciudad de México',
-        phone: '5512345678',
+    userProfile: any = {
+        fullName: 'Desconocido',
+        username: 'usuario',
+        email: 'usuario@erp.com',
+        address: 'No especificada',
+        phone: '0000000000',
         dob: new Date(1995, 9, 15),
-        permissions: ['group:add', 'group:edit', 'group:delete', 'user:crud', 'ticket:create', 'ticket:edit'],
+        permissions: [],
         status: 'Activo',
-        skills: ['Angular', 'TypeScript', 'Gestión de Proyectos', 'Base de Datos']
+        skills: ['Software', 'Data']
     };
 
     // FASE 4: Métricas de Carga de Trabajo
@@ -81,10 +82,19 @@ export class UserComponent implements OnInit {
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
         private router: Router,
-        private dataService: DataService
+        private dataService: DataService,
+        private securityService: SecurityService
     ) { }
 
     ngOnInit() {
+        const current = this.securityService.getCurrentUser();
+        if (current) {
+            this.userProfile.fullName = current.name || current.email;
+            this.userProfile.email = current.email;
+            this.userProfile.username = current.email.split('@')[0];
+            this.userProfile.permissions = current.permissions || [];
+        }
+
         this.profileForm = this.fb.group({
             fullName: [this.userProfile.fullName, [Validators.required, Validators.minLength(3)]],
             username: [this.userProfile.username, [Validators.required, Validators.minLength(4)]],
@@ -94,7 +104,7 @@ export class UserComponent implements OnInit {
             dob: [this.userProfile.dob, [Validators.required, ageValidator]]
         });
 
-        // FASE 4: Cargar tickets
+        // Cargar tickets asignados
         this.dataService.getTicketsByUserEmail(this.userProfile.email).subscribe(tickets => {
             this.assignedTickets = tickets;
         });

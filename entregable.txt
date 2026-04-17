@@ -1,0 +1,110 @@
+Entrega Final: ERP Tickets de Seguridad (Arquitectura de Microservicios)
+
+Repositorios:
+- Frontend (Angular): [ENLACE_A_GITHUB_FRONTEND]
+- Backend (Microservicios & API Gateway): [ENLACE_A_GITHUB_BACKEND]
+
+
+URL Obligatoria de Salud:
+- GET [URL_DEPLOY_GATEWAY]/health
+
+--- Documentación Completa de las APIs ---
+
+1. MICROSERVICIO DE USUARIOS (Users Service)
+
+   - Login
+     Verbo: POST
+     Endpoint: /api/users/login
+     Body (JSON):
+     {
+       "email": "user@example.com",
+       "password": "Password123!"
+     }
+
+   - Registro
+     Verbo: POST
+     Endpoint: /api/users/register
+     Body (JSON):
+     {
+       "fullName": "John Doe",
+       "username": "johndoe",
+       "email": "user@example.com",
+       "address": "123 Main St",
+       "phone": "5551234567",
+       "dob": "1990-01-01",
+       "password": "Password123!"
+     }
+
+2. MICROSERVICIO DE TICKETS (Tickets Service)
+
+   - Listar Todos los Tickets
+     Verbo: GET
+     Endpoint: /api/tickets
+     Headers: { "Authorization": "Bearer [TOKEN]" }
+
+   - Crear Nuevo Ticket
+     Verbo: POST
+     Endpoint: /api/tickets
+     Headers: { "Authorization": "Bearer [TOKEN]" }
+     Body (JSON):
+     {
+       "groupId": "uuid_del_grupo",
+       "title": "Falla en inicio de sesión",
+       "description": "Usuarios no pueden hacer login.",
+       "status": "Pendiente",
+       "creatorId": "uuid_creador",
+       "assignedTo": "admin@demo.com",
+       "priority": "Alta"
+     }
+
+   - Actualizar Ticket
+     Verbo: PUT
+     Endpoint: /api/tickets/:id
+     Headers: { "Authorization": "Bearer [TOKEN]" }
+     Body (JSON):
+     {
+       "status": "En Progreso",
+       "comments": "Revisando logs del servidor"
+     }
+
+3. MICROSERVICIO DE GRUPOS (Groups Service)
+
+   - Listar Todos los Grupos
+     Verbo: GET
+     Endpoint: /api/groups
+     Headers: { "Authorization": "Bearer [TOKEN]" }
+
+   - Crear Nuevo Grupo
+     Verbo: POST
+     Endpoint: /api/groups
+     Headers: { "Authorization": "Bearer [TOKEN]" }
+     Body (JSON):
+     {
+       "name": "Soporte de TI",
+       "description": "Equipo de infraestructura y redes",
+       "nivel": "Avanzado",
+       "autor": "Admin"
+     }
+
+   - Agregar Miembro a Grupo
+     Verbo: POST
+     Endpoint: /api/groups/:id/members
+     Headers: { "Authorization": "Bearer [TOKEN]" }
+     Body (JSON):
+     {
+       "email": "nuevo@demo.com"
+     }
+
+   - Actualizar Grupo
+     Verbo: PUT
+     Endpoint: /api/groups/:id
+     Headers: { "Authorization": "Bearer [TOKEN]" }
+     Body (JSON):
+     {
+       "description": "Nueva descripcion"
+     }
+
+   - Eliminar Grupo
+     Verbo: DELETE
+     Endpoint: /api/groups/:id
+     Headers: { "Authorization": "Bearer [TOKEN]" }

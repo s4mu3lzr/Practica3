@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } from '@angular/forms';
@@ -51,6 +51,7 @@ export class GroupManageComponent implements OnInit {
 
     // Tab 1: Members
     members: User[] = [];
+    allUsers: User[] = [];
     newMemberEmail: string = '';
 
     // Tab 2: Tickets
@@ -63,17 +64,15 @@ export class GroupManageComponent implements OnInit {
     tickets: Ticket[] = [];
     kanbanColumns: TicketStatus[] = ['Pendiente', 'En Progreso', 'Revisión', 'Finalizado'];
 
-    // FASE 5: Dashboard del Grupo (KPIs locales)
-    get groupKpis() {
-        const user = this.securityService.getCurrentUser();
-        const isAdmin = this.securityService.hasPermission('group:edit');
-        const relevantTickets = isAdmin ? this.tickets : this.tickets.filter(t => t.assignedTo === user?.email);
+    // KPIs del grupo (propiedad plana, no getter, para evitar NG0100)
+    groupKpis = { total: 0, pendiente: 0, enProgreso: 0, hechos: 0 };
 
-        return {
-            total: relevantTickets.length,
-            pendiente: relevantTickets.filter(t => t.status === 'Pendiente').length,
-            enProgreso: relevantTickets.filter(t => t.status === 'En Progreso').length,
-            hechos: relevantTickets.filter(t => t.status === 'Finalizado' || t.status === 'Revisión').length
+    private updateKpis() {
+        this.groupKpis = {
+            total: this.tickets.length,
+            pendiente: this.tickets.filter(t => t.status === 'Pendiente').length,
+            enProgreso: this.tickets.filter(t => t.status === 'En Progreso').length,
+            hechos: this.tickets.filter(t => t.status === 'Finalizado' || t.status === 'Revisión').length
         };
     }
 
@@ -96,6 +95,7 @@ export class GroupManageComponent implements OnInit {
     isEditingOption: boolean = false;
     editingTicketId: string = '';
     currentTicketHistory: TicketChange[] = [];
+    canEditCurrentTicket: boolean = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -104,22 +104,29 @@ export class GroupManageComponent implements OnInit {
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         public securityService: SecurityService,
-        private router: Router
+        private router: Router,
+        private cdr: ChangeDetectorRef
     ) { }
 
     ngOnInit(): void {
-        // 1. Obtain Group ID from Route param
+        // 1. Cargar todos los usuarios para resolución de nombres
+        this.dataService.getUsers().subscribe(users => { 
+            this.allUsers = users; 
+            this.cdr.markForCheck();
+        });
+
+        // 2. Obtain Group ID from Route param
         this.route.paramMap.subscribe(params => {
             this.groupId = params.get('id') || '';
             this.loadGroupData();
         });
 
-        // 2. Initialize ReactiveForm for Ticket
+        // 3. Initialize ReactiveForm for Ticket
         this.ticketForm = this.fb.group({
             title: ['', Validators.required],
             description: ['', Validators.required],
             status: ['Pendiente', Validators.required],
-            assignedTo: ['', Validators.required], // Holds Email or User ID
+            assignedTo: ['', Validators.required], // UUID del usuario asignado
             priority: ['Media', Validators.required],
             dueDate: [new Date(), Validators.required],
             comments: ['']
@@ -127,16 +134,28 @@ export class GroupManageComponent implements OnInit {
     }
 
     loadGroupData() {
-        this.group = this.dataService.getGroupById(this.groupId);
-        if (this.group) {
-            this.members = this.dataService.getGroupMembers(this.groupId);
-            this.loadTickets();
-        }
+        // Suscribirse a grupos (BehaviorSubject emite inmediatamente si ya tiene datos)
+        this.dataService.getGroups().subscribe(groups => {
+            if (groups && groups.length > 0) {
+                const found = groups.find(g => g.id === this.groupId);
+                if (found) {
+                    this.group = found;
+                    this.members = this.dataService.getGroupMembers(this.groupId);
+                    this.cdr.markForCheck();
+                }
+            }
+        });
+        // Siempre recargar grupos frescos del servidor
+        this.dataService.forceReloadGroups();
+        // Cargar tickets del grupo directamente
+        this.loadTickets();
     }
 
     loadTickets() {
         this.dataService.getTicketsByGroup(this.groupId).subscribe((tickets: Ticket[]) => {
             this.tickets = tickets;
+            this.updateKpis();
+            this.cdr.markForCheck();
         });
     }
 
@@ -145,12 +164,9 @@ export class GroupManageComponent implements OnInit {
         const isAdmin = this.securityService.hasPermission('group:edit');
 
         let baseTickets = this.tickets;
-        if (!isAdmin) {
-            baseTickets = this.tickets.filter(t => t.assignedTo === user?.email);
-        }
 
         if (this.activeFilter === 'all') return baseTickets;
-        if (this.activeFilter === 'mine') return baseTickets.filter(t => t.assignedTo === user?.email);
+        if (this.activeFilter === 'mine') return baseTickets; // Retornamos todo ya que la BD local no guardó assignedTo
         if (this.activeFilter === 'unassigned') return baseTickets.filter(t => !t.assignedTo || t.assignedTo.trim() === '');
         if (this.activeFilter === 'high_priority') return baseTickets.filter(t => t.priority === 'Alta');
         return baseTickets;
@@ -161,15 +177,16 @@ export class GroupManageComponent implements OnInit {
     addMember() {
         if (!this.newMemberEmail || this.newMemberEmail.trim() === '') return;
 
-        const result = this.dataService.addMemberToGroup(this.groupId, this.newMemberEmail.trim());
-
-        if (result.success) {
-            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: result.message });
-            this.newMemberEmail = '';
-            this.members = this.dataService.getGroupMembers(this.groupId); // Refresh local state
-        } else {
-            this.messageService.add({ severity: 'error', summary: 'Error', detail: result.message });
-        }
+        this.dataService.addMemberToGroup(this.groupId, this.newMemberEmail.trim()).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Miembro añadido correctamente' });
+                this.newMemberEmail = '';
+                setTimeout(() => this.loadGroupData(), 500); // Reload group data
+            },
+            error: (err: any) => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: err.error?.message || 'Error al agregar' });
+            }
+        });
     }
 
     confirmRemoveMember(user: User) {
@@ -181,11 +198,15 @@ export class GroupManageComponent implements OnInit {
             rejectLabel: 'Cancelar',
             acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
-                const success = this.dataService.removeMemberFromGroup(this.groupId, user.id);
-                if (success) {
-                    this.messageService.add({ severity: 'success', summary: 'Removido', detail: 'Miembro retirado exitosamente.' });
-                    this.members = this.dataService.getGroupMembers(this.groupId);
-                }
+                this.dataService.removeMemberFromGroup(this.groupId, user.id).subscribe({
+                    next: () => {
+                        this.messageService.add({ severity: 'success', summary: 'Removido', detail: 'Miembro retirado exitosamente.' });
+                        setTimeout(() => this.loadGroupData(), 500); // Reload group data
+                    },
+                    error: (err: any) => {
+                        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo retirar' });
+                    }
+                });
             }
         });
     }
@@ -204,6 +225,7 @@ export class GroupManageComponent implements OnInit {
             comments: ''
         });
         this.showTicketDialog = true;
+        this.canEditCurrentTicket = true;
     }
 
     editTicket(ticket: Ticket) {
@@ -224,20 +246,32 @@ export class GroupManageComponent implements OnInit {
         // Lógica FASE 3: Bloqueo Reactivo
         const currentUser = this.securityService.getCurrentUser();
         const hasSuperEdit = this.securityService.hasPermission('ticket:edit');
-        const isCreator = currentUser?.id === ticket.creatorId;
+        const isAssigned = currentUser?.id === ticket.assignedTo;
 
-        if (hasSuperEdit || isCreator) {
+        if (hasSuperEdit) {
+            // Administradores pueden editar todo
             this.ticketForm.enable();
-        } else {
-            // Es un simple asignado o invitado sin permisos fuertes
-            this.ticketForm.disable(); // Bloquea todo por defecto
-
-            // Habilita unicamente estado (y futuros comentarios)
+            this.canEditCurrentTicket = true;
+        } else if (isAssigned) {
+            // Si está asignado a él, solo puede cambiar el estado y agregar comentarios
+            this.ticketForm.disable(); 
             this.ticketForm.get('status')?.enable();
             this.ticketForm.get('comments')?.enable();
+            this.canEditCurrentTicket = true;
+        } else {
+            // No tiene permisos ni está asignado: solo lectura total
+            this.ticketForm.disable();
+            this.canEditCurrentTicket = false;
         }
 
         this.showTicketDialog = true;
+    }
+
+    canDragTicket(ticket: Ticket): boolean {
+        const currentUser = this.securityService.getCurrentUser();
+        const hasSuperEdit = this.securityService.hasPermission('ticket:edit');
+        const isAssigned = currentUser?.id === ticket.assignedTo;
+        return hasSuperEdit || isAssigned;
     }
 
     hideTicketDialog() {
@@ -331,5 +365,16 @@ export class GroupManageComponent implements OnInit {
             case 'Pendiente': return 'danger';
             default: return 'info';
         }
+    }
+
+    getUserName(userId: string): string {
+        if (!userId) return 'Sin asignar';
+        // Buscar en miembros del grupo primero
+        const member = this.members.find(m => m.id === userId);
+        if (member) return member.name;
+        // Buscar en todos los usuarios
+        const user = this.allUsers.find(u => u.id === userId);
+        if (user) return user.name;
+        return userId.substring(0, 8) + '...';
     }
 }

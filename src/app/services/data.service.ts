@@ -1,217 +1,353 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { User } from '../models/user.model';
 import { Group } from '../models/group.model';
 import { Ticket, TicketStatus } from '../models/ticket.model';
-import { SupabaseService } from './supabase.service';
+import { SecurityService } from '../security/security';
 
 @Injectable({
     providedIn: 'root'
 })
 export class DataService {
-    private users: User[] = [
-        { id: '1', name: 'Alce Ruiz', email: 'alce@demo.com', permissions: ['group:add', 'group:edit', 'group:delete', 'user:crud', 'ticket:create', 'ticket:edit'] },
-        { id: '2', name: 'Maria Lopez', email: 'maria@demo.com', permissions: ['ticket:create', 'ticket:edit'] },
-        { id: '3', name: 'Juan Perez', email: 'juan@demo.com', permissions: ['ticket:create'] },
-        { id: '4', name: 'Samuel', email: 'samu@gmail.com', permissions: [] }
-    ];
+    private readonly API = 'http://localhost:4000';
 
-    private groups: Group[] = [
-        { id: 'g1', name: 'IT Support', description: 'Technical support team', nivel: 'Avanzado', autor: 'Alce Ruiz', membersCount: 2, memberIds: ['1', '2'] },
-        { id: 'g2', name: 'Marketing', description: 'Marketing operations', nivel: 'Intermedio', autor: 'Alce Ruiz', membersCount: 1, memberIds: ['1'] }
-    ];
+    private usersSubject = new BehaviorSubject<User[]>([]);
+    private groupsSubject = new BehaviorSubject<Group[]>([]);
+    private ticketsSubject = new BehaviorSubject<Ticket[]>([]);
 
-    private tickets: Ticket[] = [
-        {
-            id: 't1',
-            groupId: 'g1',
-            title: 'Fix Login Bug',
-            description: 'Users cannot log in with AD credentials',
-            status: 'Pendiente',
-            creatorId: '1',
-            assignedTo: 'alce@demo.com',
-            priority: 'Alta',
-            creationDate: new Date(),
-            dueDate: new Date(new Date().getTime() + 86400000), // tomorrow
-            comments: '',
-            history: []
-        },
-        {
-            id: 't2',
-            groupId: 'g1',
-            title: 'Update Server OS',
-            description: 'Update Linux to 22.04',
-            status: 'En Progreso',
-            creatorId: '2',
-            assignedTo: 'maria@demo.com',
-            priority: 'Media',
-            creationDate: new Date(),
-            dueDate: new Date(new Date().getTime() + 86400000 * 3), // 3 days
-            comments: '',
-            history: []
-        }
-    ];
+    private usersLoaded = false;
+    private groupsLoaded = false;
+    private ticketsLoaded = false;
 
-    private usersSubject = new BehaviorSubject<User[]>(this.users);
-    private groupsSubject = new BehaviorSubject<Group[]>(this.groups);
-    private ticketsSubject = new BehaviorSubject<Ticket[]>(this.tickets);
-
-    constructor(private supabaseService: SupabaseService) {
+    constructor(private http: HttpClient, private securityService: SecurityService) {
+        // Solo carga usuarios y grupos al inicio (no todos los tickets — muy costoso)
         this.loadUsers();
+        this.loadGroups();
+
+        // Polling constante para mantener permisos/usuarios frescos si otro admin los cambia
+        if (typeof window !== 'undefined') {
+            setInterval(() => {
+                // Forzar recarga silenciosa en segundo plano
+                this.usersLoaded = false;
+                this.loadUsers();
+            }, 10000); // Cada 10 segundos actualiza permisos
+        }
     }
 
-    async loadUsers() {
-        const { data, error } = await this.supabaseService.client.from('usuarios').select('*');
-        if (error) {
-            console.error('Error al cargar usuarios desde Supabase:', error);
-            return;
-        }
-        this.users = data as User[] || [];
-        this.usersSubject.next([...this.users]);
+    private getHeaders() {
+        const token = typeof window !== 'undefined' && window.localStorage ? localStorage.getItem('token') : null;
+        return {
+            headers: new HttpHeaders({
+                'Authorization': `Bearer ${token || ''}`
+            })
+        };
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // USUARIOS
+    // ─────────────────────────────────────────────────────────
+    loadUsers() {
+        if (this.usersLoaded) return;
+        this.usersLoaded = true;
+        this.http.get<{ statusCode: number, data: any[] }>(`${this.API}/api/users`, this.getHeaders())
+            .subscribe({
+                next: (res) => {
+                    const users = (res.data || []).map((u: any) => ({
+                        id: u.id,
+                        name: u.name || u.nombre_completo || u.email,
+                        email: u.email,
+                        permissions: Array.isArray(u.permissions) ? u.permissions : []
+                    }));
+                    // Actualizar permisos en vivo para el usuario activo si está en la sesión
+                    const currentUser = this.securityService.getCurrentUser();
+                    if (currentUser) {
+                        const activeUserInList = users.find((u: User) => u.email === currentUser.email);
+                        if (activeUserInList) {
+                            this.securityService.updateActivePermissions(activeUserInList.permissions);
+                        }
+                    }
+
+                    this.usersSubject.next(users);
+                },
+                error: (err) => { this.usersLoaded = false; }
+            });
     }
 
     getUsers(): Observable<User[]> {
         return this.usersSubject.asObservable();
     }
 
-    async addUser(user: User) {
-        const { data, error } = await this.supabaseService.client.from('usuarios').insert([user]).select();
-        if (error) {
-            console.error('Error al agregar usuario:', error);
-            return;
-        }
-        if (data && data.length > 0) {
-            this.users.push(data[0] as User);
-            this.usersSubject.next([...this.users]);
-        }
+    /** Fuerza recarga desde servidor */
+    forceReloadUsers() {
+        this.usersLoaded = false;
+        this.loadUsers();
     }
 
-    async updateUser(user: User) {
-        const { data, error } = await this.supabaseService.client.from('usuarios').update(user).eq('id', user.id).select();
-        if (error) {
-            console.error('Error al actualizar usuario:', error);
-            return;
-        }
-        if (data && data.length > 0) {
-            const idx = this.users.findIndex(u => u.id === user.id);
-            if (idx > -1) {
-                this.users[idx] = data[0] as User;
-                this.usersSubject.next([...this.users]);
-            }
-        }
+    addUser(user: any) {
+        // POST /api/users/add con nombre_completo, email, username, password, permissions
+        const payload = {
+            nombre_completo: user.name,
+            email: user.email,
+            username: user.username || user.email.split('@')[0],
+            password: user.password || 'TempPass1234!',
+            permissions: user.permissions || []
+        };
+        return this.http.post<any>(`${this.API}/api/users/add`, payload, this.getHeaders())
+            .subscribe({
+                next: () => this.loadUsers(),
+                error: (err) => console.error('Error al agregar usuario:', err)
+            });
     }
 
-    async deleteUser(id: string) {
-        const { error } = await this.supabaseService.client.from('usuarios').delete().eq('id', id);
-        if (error) {
-            console.error('Error al eliminar usuario:', error);
-            return;
-        }
-        this.users = this.users.filter(u => u.id !== id);
-        this.usersSubject.next([...this.users]);
+    addUserObservable(user: any): Observable<any> {
+        const payload = {
+            nombre_completo: user.name,
+            email: user.email,
+            username: user.username || user.email.split('@')[0],
+            password: user.password || 'TempPass1234!',
+            permissions: user.permissions || []
+        };
+        return this.http.post<any>(`${this.API}/api/users/add`, payload, this.getHeaders());
+    }
+
+    updateUser(user: User) {
+        return this.http.put<any>(`${this.API}/api/users/${user.id}`, {
+            name: user.name,
+            email: user.email,
+            permissions: user.permissions
+        }, this.getHeaders())
+            .subscribe({
+                next: () => this.loadUsers(),
+                error: (err) => console.error('Error al actualizar usuario:', err)
+            });
+    }
+
+    updateUserObservable(user: User): Observable<any> {
+        return this.http.put<any>(`${this.API}/api/users/${user.id}`, {
+            name: user.name,
+            email: user.email,
+            permissions: user.permissions
+        }, this.getHeaders());
+    }
+
+    deleteUser(id: string) {
+        this.http.delete(`${this.API}/api/users/${id}`, this.getHeaders())
+            .subscribe({
+                next: () => this.loadUsers(),
+                error: (err) => console.error('Error al eliminar usuario:', err)
+            });
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // GRUPOS
+    // ─────────────────────────────────────────────────────────
+    loadGroups() {
+        if (this.groupsLoaded) return;
+        this.groupsLoaded = true;
+        this.http.get<{ statusCode: number, data: any[] }>(`${this.API}/api/groups`, this.getHeaders())
+            .subscribe({
+                next: (res) => {
+                    const mapped = (res.data || []).map((g: any) => ({
+                        id: g.id,
+                        name: g.nombre || g.name,
+                        description: g.descripcion || g.description,
+                        nivel: g.nivel || 'Básico',
+                        autor: g.creador_id || g.autor || 'Sistema',
+                        membersCount: g.membersCount || (g.memberIds ? g.memberIds.length : 0),
+                        memberIds: g.memberIds || []
+                    }));
+                    this.groupsSubject.next(mapped);
+                },
+                error: (err) => { this.groupsLoaded = false; }
+            });
     }
 
     getGroups(): Observable<Group[]> {
         return this.groupsSubject.asObservable();
     }
 
-    addGroup(group: Group) {
-        this.groups.push(group);
-        this.groupsSubject.next([...this.groups]);
+    /** Fuerza recarga desde servidor (ignora flag de cacheado) */
+    forceReloadGroups() {
+        this.groupsLoaded = false;
+        this.loadGroups();
+    }
+
+    addGroup(group: any) {
+        const currentUser = this.getCurrentUserId();
+        const payload = {
+            nombre: group.name,
+            descripcion: group.description,
+            creador_id: currentUser
+        };
+        this.http.post(`${this.API}/api/groups`, payload, this.getHeaders())
+            .subscribe({
+                next: () => this.loadGroups(),
+                error: (err) => console.error('Error al agregar grupo:', err)
+            });
     }
 
     updateGroup(group: Group) {
-        const idx = this.groups.findIndex(g => g.id === group.id);
-        if (idx > -1) {
-            this.groups[idx] = group;
-            this.groupsSubject.next([...this.groups]);
-        }
+        this.http.put(`${this.API}/api/groups/${group.id}`, {
+            nombre: group.name,
+            descripcion: group.description
+        }, this.getHeaders())
+            .subscribe({
+                next: () => this.loadGroups(),
+                error: (err) => console.error('Error al actualizar grupo:', err)
+            });
     }
 
     deleteGroup(groupId: string) {
-        this.groups = this.groups.filter(g => g.id !== groupId);
-        this.groupsSubject.next([...this.groups]);
+        this.http.delete(`${this.API}/api/groups/${groupId}`, this.getHeaders())
+            .subscribe({
+                next: () => this.loadGroups(),
+                error: (err) => console.error('Error al eliminar grupo:', err)
+            });
+    }
+
+    getGroupById(id: string): Group | undefined {
+        return this.groupsSubject.value.find(g => g.id === id);
+    }
+
+    getGroupMembers(groupId: string): User[] {
+        const group = this.getGroupById(groupId);
+        if (!group || !group.memberIds) return [];
+        return this.usersSubject.value.filter(u => group.memberIds?.includes(u.id));
+    }
+
+    addMemberToGroup(groupId: string, email: string): Observable<any> {
+        return this.http.post(`${this.API}/api/groups/${groupId}/members`, { email }, this.getHeaders());
+    }
+
+    removeMemberFromGroup(groupId: string, userId: string): Observable<any> {
+        return this.http.delete(`${this.API}/api/groups/${groupId}/members/${userId}`, this.getHeaders());
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // TICKETS
+    // ─────────────────────────────────────────────────────────
+    loadTickets() {
+        // Resetear flag para permitir re-carga explícita
+        this.ticketsLoaded = false;
+        this.http.get<{ statusCode: number, data: any[] }>(`${this.API}/api/tickets`, this.getHeaders())
+            .subscribe({
+                next: (res) => {
+                    const mapped = this.mapTickets(res.data || []);
+                    this.ticketsSubject.next(mapped);
+                    this.ticketsLoaded = true;
+                },
+                error: (err) => {}
+            });
+    }
+
+    private mapTickets(rawTickets: any[]): Ticket[] {
+        return rawTickets.map((t: any) => ({
+            id: t.id,
+            groupId: t.grupo_id,
+            title: t.titulo,
+            description: t.descripcion,
+            // Normalizar estado: puede venir como texto del join o como nombre
+            status: (t.estado_nombre || t.estado_id || 'Pendiente') as TicketStatus,
+            creatorId: t.autor_id,
+            assignedTo: t.asignado_id || t.assigned_to || '',
+            priority: t.prioridad_nombre || t.prioridad_id || 'Media',
+            creationDate: new Date(t.created_at || t.creado_en || Date.now()),
+            dueDate: t.due_date || t.fecha_final ? new Date(t.due_date || t.fecha_final) : new Date(Date.now() + 86400000),
+            comments: t.comments || '',
+            history: t.history || []
+        }));
     }
 
     getTickets(): Observable<Ticket[]> {
         return this.ticketsSubject.asObservable();
     }
 
-    getGroupById(id: string): Group | undefined {
-        return this.groups.find(g => g.id === id);
-    }
-
     getTicketsByGroup(groupId: string): Observable<Ticket[]> {
-        const filtered = this.tickets.filter(t => t.groupId === groupId);
+        // Fetch tickets for a specific group
+        return new Observable(observer => {
+            this.http.get<{ statusCode: number, data: any[] }>(`${this.API}/api/tickets/group/${groupId}`, this.getHeaders())
+                .subscribe({
+                    next: (res) => {
+                        const mapped = this.mapTickets(res.data || []);
+                        observer.next(mapped);
+                        observer.complete();
+                    },
+                    error: (err) => {
+                        // Fallback: filtrar del cache local
+                        const filtered = this.ticketsSubject.value.filter(t => t.groupId === groupId);
+                        observer.next(filtered);
+                        observer.complete();
+                    }
+                });
+        });
+    }
+
+    getTicketsByUserEmail(email: string | undefined): Observable<Ticket[]> {
+        if (!email) return new BehaviorSubject<Ticket[]>([]).asObservable();
+        const filtered = this.ticketsSubject.value.filter(t => t.assignedTo === email);
         return new BehaviorSubject<Ticket[]>(filtered).asObservable();
-    }
-
-    getGroupMembers(groupId: string): User[] {
-        const group = this.getGroupById(groupId);
-        if (!group || !group.memberIds) return [];
-        return this.users.filter(u => group.memberIds?.includes(u.id));
-    }
-
-    addMemberToGroup(groupId: string, email: string): { success: boolean, message: string } {
-        const user = this.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-        if (!user) {
-            return { success: false, message: 'Usuario no encontrado en el sistema.' };
-        }
-
-        const group = this.getGroupById(groupId);
-        if (!group) {
-            return { success: false, message: 'Grupo no existe.' };
-        }
-
-        if (!group.memberIds) group.memberIds = [];
-        if (group.memberIds.includes(user.id)) {
-            return { success: false, message: 'El usuario ya es integrante de este grupo.' };
-        }
-
-        group.memberIds.push(user.id);
-        group.membersCount = group.memberIds.length;
-        this.groupsSubject.next([...this.groups]);
-        return { success: true, message: 'Usuario añadido exitosamente.' };
-    }
-
-    removeMemberFromGroup(groupId: string, userId: string): boolean {
-        const group = this.getGroupById(groupId);
-        if (group && group.memberIds) {
-            group.memberIds = group.memberIds.filter(id => id !== userId);
-            group.membersCount = group.memberIds.length;
-            this.groupsSubject.next([...this.groups]);
-            return true;
-        }
-        return false;
     }
 
     addTicket(ticket: Ticket) {
-        this.tickets.push(ticket);
-        this.ticketsSubject.next([...this.tickets]);
-    }
+        // Mapear el modelo del frontend al schema de la BD
+        const currentUserId = this.getCurrentUserId();
+        const payload: any = {
+            titulo: ticket.title,
+            descripcion: ticket.description,
+            grupo_id: ticket.groupId,
+            estado_id: ticket.status || 'Pendiente',     // tickets-service resolverá el UUID
+            prioridad_id: ticket.priority || 'Media',     // tickets-service resolverá el UUID
+            autor_id: ticket.creatorId || currentUserId,
+            asignado_id: ticket.assignedTo || null,
+            fecha_final: ticket.dueDate ? new Date(ticket.dueDate).toISOString() : null
+        };
 
-    // FASE 4: Traer todos los tickets asignados globalmente a un correo
-    getTicketsByUserEmail(email: string | undefined): Observable<Ticket[]> {
-        if (!email) return new BehaviorSubject<Ticket[]>([]).asObservable();
-        const filtered = this.tickets.filter(t => t.assignedTo === email);
-        return new BehaviorSubject<Ticket[]>(filtered).asObservable();
+        this.http.post(`${this.API}/api/tickets`, payload, this.getHeaders())
+            .subscribe({
+                next: () => this.loadTickets(),
+                error: (err) => console.error('Error al agregar ticket:', err)
+            });
     }
 
     updateTicket(ticket: Ticket) {
-        const idx = this.tickets.findIndex(t => t.id === ticket.id);
-        if (idx > -1) {
-            this.tickets[idx] = ticket;
-            this.ticketsSubject.next([...this.tickets]);
-        }
+        const payload: any = {
+            titulo: ticket.title,
+            descripcion: ticket.description,
+            estado_id: ticket.status,     // tickets-service resolverá UUID
+            prioridad_id: ticket.priority, // tickets-service resolverá UUID
+            asignado_id: ticket.assignedTo || null,
+            fecha_final: ticket.dueDate ? new Date(ticket.dueDate).toISOString() : null
+        };
+
+        this.http.put(`${this.API}/api/tickets/${ticket.id}`, payload, this.getHeaders())
+            .subscribe({
+                next: () => this.loadTickets(),
+                error: (err) => console.error('Error al actualizar ticket:', err)
+            });
     }
 
     getDashboardKPIs(userEmail?: string): { total: number, pendiente: number, enProgreso: number, revision: number } {
-        const relevantTickets = userEmail ? this.tickets.filter(t => t.assignedTo === userEmail) : this.tickets;
+        const tickets = this.ticketsSubject.value;
+        const relevantTickets = userEmail ? tickets.filter(t => t.assignedTo === userEmail) : tickets;
         return {
             total: relevantTickets.length,
             pendiente: relevantTickets.filter(t => t.status === 'Pendiente').length,
             enProgreso: relevantTickets.filter(t => t.status === 'En Progreso').length,
             revision: relevantTickets.filter(t => t.status === 'Revisión').length
         };
+    }
+
+    private getCurrentUserId(): string {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    return payload.id || '';
+                } catch (e) { }
+            }
+        }
+        return '';
     }
 }

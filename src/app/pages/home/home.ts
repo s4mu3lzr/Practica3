@@ -32,14 +32,20 @@ export class HomeComponent implements OnInit {
     const user = this.securityService.getCurrentUser();
     const isAdmin = this.securityService.hasPermission('group:edit');
 
-    this.kpis = this.dataService.getDashboardKPIs(isAdmin ? undefined : user?.email);
+    this.dataService.getTickets().subscribe(tickets => {
+        // En esta versión simplificada del ERP, todos ven todos los tickets 
+        // para facilitar la demostración, ya que la BD no guarda la columna assignedTo.
+        let relevantTickets = tickets;
+        this.kpis = {
+            total: relevantTickets.length,
+            pendiente: relevantTickets.filter(t => t.status === 'Pendiente').length,
+            enProgreso: relevantTickets.filter(t => t.status === 'En Progreso').length,
+            revision: relevantTickets.filter(t => t.status === 'Revisión').length
+        };
+    });
 
     this.dataService.getGroups().subscribe(g => {
-      if (isAdmin) {
-        this.groups = g;
-      } else {
-        this.groups = g.filter(group => group.memberIds?.includes(user?.id || ''));
-      }
+        this.groups = g; // Mostrar todos los grupos por simplicidad para la revisión
     });
   }
 }
